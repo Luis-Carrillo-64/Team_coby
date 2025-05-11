@@ -1,0 +1,143 @@
+import { defineStore } from 'pinia';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    user: null,
+    token: Cookies.get('token') || null,
+    isAuthenticated: false
+  }),
+
+  actions: {
+    async login(username, password) {
+      try {
+        const response = await axios.post('http://localhost:3000/api/auth/login', {
+          username,
+          password
+        });
+
+        const { token, user } = response.data;
+        this.setAuth(token, user);
+        return true;
+      } catch (error) {
+        console.error('Error en login:', error);
+        throw error;
+      }
+    },
+
+    async register(username, email, password) {
+      try {
+        const response = await axios.post('http://localhost:3000/api/auth/register', {
+          username,
+          email,
+          password
+        });
+
+        const { token, user } = response.data;
+        this.setAuth(token, user);
+        return true;
+      } catch (error) {
+        console.error('Error en registro:', error);
+        throw error;
+      }
+    },
+
+    setAuth(token, user) {
+      this.token = token;
+      this.user = user;
+      this.isAuthenticated = true;
+      Cookies.set('token', token, { expires: 1 }); // Expira en 1 día
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    },
+
+    logout() {
+      this.token = null;
+      this.user = null;
+      this.isAuthenticated = false;
+      Cookies.remove('token');
+      delete axios.defaults.headers.common['Authorization'];
+    },
+
+    async updatePreferences(preferences) {
+      try {
+        const response = await axios.put('http://localhost:3000/api/auth/preferences', preferences);
+        this.user = response.data;
+        return true;
+      } catch (error) {
+        console.error('Error actualizando preferencias:', error);
+        throw error;
+      }
+    },
+
+    async getAllUsers() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/auth/users');
+        return response.data;
+      } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        throw error;
+      }
+    },
+
+    async createUser(user) {
+      try {
+        const response = await axios.post('http://localhost:3000/api/auth/users', user);
+        return response.data;
+      } catch (error) {
+        console.error('Error al crear usuario:', error);
+        throw error;
+      }
+    },
+
+    async updateUser(id, user) {
+      try {
+        const response = await axios.put(`http://localhost:3000/api/auth/users/${id}`, user);
+        return response.data;
+      } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        throw error;
+      }
+    },
+
+    async deleteUser(id) {
+      try {
+        const response = await axios.delete(`http://localhost:3000/api/auth/users/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        throw error;
+      }
+    },
+
+    async getFavorites() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/auth/favorites');
+        return response.data.favorites;
+      } catch (error) {
+        console.error('Error al obtener favoritos:', error);
+        throw error;
+      }
+    },
+
+    async addFavorite(pokemonName) {
+      try {
+        const response = await axios.post('http://localhost:3000/api/auth/favorites/add', { pokemonName });
+        return response.data.favorites;
+      } catch (error) {
+        console.error('Error al agregar favorito:', error);
+        throw error;
+      }
+    },
+
+    async removeFavorite(pokemonName) {
+      try {
+        const response = await axios.post('http://localhost:3000/api/auth/favorites/remove', { pokemonName });
+        return response.data.favorites;
+      } catch (error) {
+        console.error('Error al quitar favorito:', error);
+        throw error;
+      }
+    }
+  }
+}); 
