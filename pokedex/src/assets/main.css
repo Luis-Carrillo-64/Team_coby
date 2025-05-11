@@ -1,35 +1,48 @@
-@import './base.css';
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Pokemon';
+  src: url('https://cdn.jsdelivr.net/npm/pokemon-font@1.8.1/fonts/pokemon-font.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/npm/pokemon-font@1.8.1/fonts/pokemon-font.woff') format('woff');
   font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+.font-pokemon {
+  font-family: 'Pokemon', monospace;
+  letter-spacing: 0.05em;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+.font-pixel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 0.03em;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* Estilos para scrollbar personalizados */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
+
+::-webkit-scrollbar-track {
+  background: #9bbc0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0f380f;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #306230;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #9bbc0f;
+} 
