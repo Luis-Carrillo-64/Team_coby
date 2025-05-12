@@ -104,4 +104,14 @@ exports.searchPokemon = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error al buscar pokemon', error: error.message });
   }
+};
+
+// Obtener todos los pokemon sin paginación (para favoritos)
+exports.getAllPokemonNoPaginate = async (req, res) => {
+  try {
+    const pokemon = await Pokemon.find().sort({ number: 1 });
+    res.json({ pokemon });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener todos los pokemon', error: error.message });
+  }
 }; 

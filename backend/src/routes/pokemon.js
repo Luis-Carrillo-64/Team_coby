@@ -6,6 +6,7 @@ const { authenticateToken, isAdmin } = require('../middleware/auth');
 // Rutas públicas
 router.get('/', pokemonController.getAllPokemon);
 router.get('/search', pokemonController.searchPokemon);
+router.get('/all', pokemonController.getAllPokemonNoPaginate);
 router.get('/:id', pokemonController.getPokemonById);
 
 // Rutas protegidas (solo admin)

@@ -99,7 +99,7 @@
     </div>
 
     <!-- Paginación -->
-    <div class="flex justify-center pb-8">
+    <div v-if="activeTab === 'all'" class="flex justify-center pb-8">
       <nav class="relative z-0 inline-flex gap-2">
         <button
           :disabled="currentPage === 1"
@@ -262,7 +262,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { usePokemonStore } from '../stores/pokemon';
 import { useDebounceFn } from '@vueuse/core';
@@ -307,9 +307,13 @@ const toggleFavorite = async (pokemonName) => {
   loadingFavoritos.value = true;
   try {
     if (isFavorite(pokemonName)) {
-      favoritos.value = await auth.removeFavorite(pokemonName);
+      await auth.removeFavorite(pokemonName);
     } else {
-      favoritos.value = await auth.addFavorite(pokemonName);
+      await auth.addFavorite(pokemonName);
+    }
+    favoritos.value = await auth.getFavorites();
+    if (activeTab.value === 'favorites') {
+      await pokemon.fetchAllPokemon();
     }
   } catch (e) {}
   loadingFavoritos.value = false;
@@ -438,9 +442,19 @@ const handleCreatePokemon = async () => {
 
 const filteredPokemonList = computed(() => {
   if (activeTab.value === 'favorites' && auth.isAuthenticated) {
-    return pokemonList.value.filter(p => favoritos.value.includes(p.name));
+    const favs = favoritos.value.map(f => f.toLowerCase());
+    return pokemon.pokemon.filter(p => favs.includes(p.name.toLowerCase()));
   }
   return pokemonList.value;
+});
+
+watch(activeTab, async (newTab) => {
+  if (newTab === 'favorites' && auth.isAuthenticated) {
+    favoritos.value = await auth.getFavorites();
+    await pokemon.fetchAllPokemon();
+  } else if (newTab === 'all') {
+    await fetchPokemon();
+  }
 });
 
 onMounted(async () => {
