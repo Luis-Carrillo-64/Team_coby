@@ -98,46 +98,76 @@
       </div>
     </div>
 
+<<<<<<< Updated upstream
     <!-- Paginación -->
     <div v-if="activeTab === 'all'" class="flex justify-center pb-8">
+=======
+    <!-- Paginación Mejorada -->
+    <div class="flex justify-center pb-8">
+>>>>>>> Stashed changes
       <nav class="relative z-0 inline-flex gap-2">
+        <!-- Ir a la primera página -->
+        <button
+          :disabled="currentPage === 1"
+          @click="changePage(1)"
+          class="relative group"
+        >
+          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">«</span>
+          </div>
+        </button>
+        <!-- Página anterior -->
         <button
           :disabled="currentPage === 1"
           @click="changePage(currentPage - 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
-            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">Anterior</span>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">‹</span>
           </div>
         </button>
-        
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          @click="changePage(page)"
-          class="relative group"
-        >
-          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div 
-            class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]"
-            :class="currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
+        <!-- Números de página con puntos suspensivos -->
+        <template v-for="page in paginationRange" :key="page">
+          <span v-if="page === '...'" class="px-3 py-2 font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-lg">...</span>
+          <button
+            v-else
+            @click="changePage(page)"
+            class="relative group"
           >
-            <span 
-              class="font-pixel text-sm"
-              :class="currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
-            >{{ page }}</span>
-          </div>
-        </button>
-
+            <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+            <div
+              class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]"
+              :class="currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
+            >
+              <span
+                class="font-pixel text-sm"
+                :class="currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
+              >{{ page }}</span>
+            </div>
+          </button>
+        </template>
+        <!-- Página siguiente -->
         <button
           :disabled="currentPage === totalPages"
           @click="changePage(currentPage + 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
-            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">Siguiente</span>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">›</span>
+          </div>
+        </button>
+        <!-- Ir a la última página -->
+        <button
+          :disabled="currentPage === totalPages"
+          @click="changePage(totalPages)"
+          class="relative group"
+        >
+          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">»</span>
           </div>
         </button>
       </nav>
@@ -448,6 +478,7 @@ const filteredPokemonList = computed(() => {
   return pokemonList.value;
 });
 
+<<<<<<< Updated upstream
 watch(activeTab, async (newTab) => {
   if (newTab === 'favorites' && auth.isAuthenticated) {
     favoritos.value = await auth.getFavorites();
@@ -455,6 +486,30 @@ watch(activeTab, async (newTab) => {
   } else if (newTab === 'all') {
     await fetchPokemon();
   }
+=======
+const paginationRange = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const delta = 2; // Cuántas páginas mostrar a cada lado
+  const range = [];
+  let l = Math.max(2, current - delta);
+  let r = Math.min(total - 1, current + delta);
+
+  range.push(1);
+  if (l > 2) {
+    range.push('...');
+  }
+  for (let i = l; i <= r; i++) {
+    range.push(i);
+  }
+  if (r < total - 1) {
+    range.push('...');
+  }
+  if (total > 1) {
+    range.push(total);
+  }
+  return range;
+>>>>>>> Stashed changes
 });
 
 onMounted(async () => {
