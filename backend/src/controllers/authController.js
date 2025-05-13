@@ -35,8 +35,15 @@ exports.register = async (req, res) => {
     // Generar token
     const token = generateToken(user);
 
+    // Setear cookie segura
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 1 día
+    });
+
     res.status(201).json({
-      token,
       user: {
         id: user._id,
         username: user.username,
@@ -69,8 +76,15 @@ exports.login = async (req, res) => {
     // Generar token
     const token = generateToken(user);
 
+    // Setear cookie segura
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 1 día
+    });
+
     res.json({
-      token,
       user: {
         id: user._id,
         username: user.username,

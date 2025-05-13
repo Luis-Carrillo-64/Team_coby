@@ -2,7 +2,12 @@ const jwt = require('jsonwebtoken');
 
 exports.authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  let token = authHeader && authHeader.split(' ')[1];
+
+  // Si no hay token en el header, buscar en la cookie
+  if (!token && req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
 
   if (!token) {
     return res.status(401).json({ message: 'Token no proporcionado' });

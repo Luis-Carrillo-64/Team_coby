@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-white via-[#9bbc0f] to-[#8bac0f] dark:from-[#183c1a] dark:via-[#0f380f] dark:to-[#306230] transition-colors duration-500 overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-white via-[#9bbc0f] to-[#8bac0f] dark:from-[#183c1a] dark:via-[#0f380f] dark:to-[#306230] transition-colors duration-500 overflow-hidden py-8 sm:py-12 px-2 sm:px-4 lg:px-8">
     <!-- Patrón Pokéball modo claro -->
     <svg class="absolute inset-0 w-full h-full opacity-10 pointer-events-none dark:hidden" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="100" cy="100" r="90" stroke="#0f380f" stroke-width="8" fill="none" />
@@ -12,12 +12,12 @@
       <circle cx="100" cy="100" r="30" stroke="#9bbc0f" stroke-width="8" fill="none" />
       <rect x="10" y="90" width="180" height="20" fill="#9bbc0f" />
     </svg>
-    <div class="max-w-md w-full space-y-8 bg-white/90 dark:bg-[#183c1a]/90 rounded-3xl shadow-2xl p-8 border-t-8 border-pokemon-red dark:border-pokemon-blue relative z-10 text-[#0f380f] dark:text-[#9bbc0f]">
+    <div class="max-w-md w-full space-y-8 bg-white/90 dark:bg-[#183c1a]/90 rounded-3xl shadow-2xl p-6 sm:p-8 border-t-8 border-pokemon-red dark:border-pokemon-blue relative z-10 text-[#0f380f] dark:text-[#9bbc0f] transition-all duration-300 animate-fade-in">
       <div class="flex flex-col items-center">
-        <Icon icon="gg:pokemon" width="48" height="48" class="text-pokemon-red dark:text-pokemon-blue drop-shadow mb-2" />
-        <h2 class="text-3xl font-extrabold text-pokemon-red dark:text-pokemon-blue mb-2 drop-shadow">Crear una cuenta</h2>
+        <Icon icon="gg:pokemon" width="48" height="48" class="text-pokemon-red dark:text-pokemon-blue drop-shadow mb-2 animate-bounce-subtle" />
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-pokemon-red dark:text-pokemon-blue mb-2 drop-shadow">Crear una cuenta</h2>
       </div>
-      <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
+      <form class="mt-4 space-y-6" @submit.prevent="handleSubmit">
         <div class="space-y-4">
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Usuario</label>
@@ -27,7 +27,7 @@
               name="username"
               type="text"
               required
-              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow"
+              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Usuario"
             />
           </div>
@@ -39,7 +39,7 @@
               name="email"
               type="email"
               required
-              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow"
+              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Email"
             />
           </div>
@@ -51,7 +51,7 @@
               name="password"
               type="password"
               required
-              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow"
+              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Contraseña"
             />
           </div>
@@ -63,7 +63,7 @@
               name="confirmPassword"
               type="password"
               required
-              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow"
+              class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Confirmar Contraseña"
             />
           </div>
@@ -73,7 +73,7 @@
             type="submit"
             :disabled="loading || !isValid"
             :class="[
-              'w-full flex justify-center items-center py-3 px-4 border border-transparent text-lg font-bold rounded-full shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2',
+              'w-full flex justify-center items-center py-3 px-4 border border-transparent text-base sm:text-lg font-bold rounded-full shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2',
               loading || !isValid
                 ? 'bg-[#eaf5c3] text-[#0f380f] dark:bg-[#bada55] dark:text-[#0f380f] cursor-not-allowed opacity-80'
                 : 'bg-pokemon-red dark:bg-[#9bbc0f] text-white dark:text-[#0f380f] focus:ring-pokemon-blue dark:focus:ring-[#9bbc0f] dark:hover:bg-[#bada55]'
@@ -89,13 +89,13 @@
         <div class="text-sm text-center">
           <router-link
             to="/login"
-            class="font-medium text-pokemon-blue dark:text-pokemon-red hover:underline"
+            class="font-medium text-pokemon-blue dark:text-pokemon-red hover:underline transition-colors duration-200"
           >
             ¿Ya tienes cuenta? Inicia sesión
           </router-link>
         </div>
       </form>
-      <div v-if="error" class="mt-4 text-center text-sm text-red-600 font-bold">
+      <div v-if="error" class="mt-4 text-center text-sm text-red-600 font-bold animate-fade-in">
         {{ error }}
       </div>
     </div>
@@ -145,4 +145,14 @@ const handleSubmit = async () => {
     loading.value = false;
   }
 };
-</script> 
+</script>
+
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease;
+}
+</style> 

@@ -51,7 +51,13 @@ export const useAuthStore = defineStore('auth', {
       this.token = token;
       this.user = user;
       this.isAuthenticated = true;
-      Cookies.set('token', token, { expires: 1 }); // Expira en 1 día
+      // Manejo seguro de cookies: secure, sameSite. httpOnly solo desde backend.
+      Cookies.set('token', token, {
+        expires: 1,
+        secure: true, // Solo por HTTPS
+        sameSite: 'Lax' // Previene CSRF básico
+        // httpOnly: true // Solo puede ser seteado por el backend
+      });
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     },
 

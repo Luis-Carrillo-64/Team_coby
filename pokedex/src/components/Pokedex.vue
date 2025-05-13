@@ -53,7 +53,7 @@
     </div>
 
     <!-- Grid de Pokémon -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-8">
+    <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-2 sm:p-4 md:p-8 transition-all duration-300">
       <div
         v-for="pokemon in filteredPokemonList"
         :key="pokemon._id"
@@ -179,11 +179,11 @@
 
     <!-- Modal de detalles -->
     <Transition name="modal">
-      <div v-if="selectedPokemon" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="selectedPokemon" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
         <!-- Fondo difuminado y clickeable para cerrar -->
         <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="selectedPokemon = null"></div>
         <!-- Modal principal -->
-        <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-8 animate-slide-in-up">
+        <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
           <!-- Botón de cerrar -->
           <button @click="selectedPokemon = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
             <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
@@ -295,9 +295,9 @@
 
     <!-- Modal de Filtros -->
     <Transition name="modal">
-      <div v-if="showFilters" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="showFilters" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
         <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="showFilters = false"></div>
-        <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-8 animate-slide-in-up">
+        <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
           <button @click="showFilters = false" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
             <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
           </button>
