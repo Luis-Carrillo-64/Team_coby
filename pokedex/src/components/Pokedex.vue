@@ -4,7 +4,7 @@
     <div class="absolute inset-0 bg-[#8bac0f] dark:bg-[#306230] opacity-20 pointer-events-none"></div>
 
     <!-- Tabs para ver todos o solo favoritos -->
-    <div v-if="auth.isAuthenticated" class="flex justify-center mt-6 mb-2 gap-4">
+    <div class="flex justify-center mt-6 mb-2 gap-4">
       <button
         @click="activeTab = 'all'"
         :class="activeTab === 'all' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
@@ -13,6 +13,7 @@
         Todos
       </button>
       <button
+        v-if="auth.isAuthenticated"
         @click="activeTab = 'favorites'"
         :class="activeTab === 'favorites' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
         class="px-6 py-2 rounded-lg font-bold shadow border border-pokemon-red dark:border-pokemon-blue transition-colors"
@@ -785,11 +786,16 @@ watch([
 ], async ([, , , , , , , newTab], [,,,,,, , oldTab]) => {
   currentPage.value = 1;
   if (activeTab.value === 'favorites') {
+    if (!auth.isAuthenticated) {
+      favoritos.value = [];
+      return;
+    }
     if (!allPokemonLoaded.value) {
       await pokemon.fetchAllPokemon();
       allPokemonList.value = [...pokemon.pokemon];
       allPokemonLoaded.value = true;
     }
+    favoritos.value = await auth.getFavorites();
   }
   await fetchFilteredPokemon();
 });
@@ -798,6 +804,8 @@ onMounted(async () => {
   await fetchFilteredPokemon();
   if (auth.isAuthenticated) {
     favoritos.value = await auth.getFavorites();
+  } else {
+    favoritos.value = [];
   }
 });
 </script>

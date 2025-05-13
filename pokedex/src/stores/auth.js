@@ -2,6 +2,9 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+// Asegura que Axios siempre envíe cookies (token) al backend
+axios.defaults.withCredentials = true;
+
 const API_URL = import.meta.env.VITE_API_URL;
 const FAVORITOS_KEY = 'favoritos';
 let favoritosCache = null;
@@ -67,6 +70,10 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false;
       Cookies.remove('token');
       delete axios.defaults.headers.common['Authorization'];
+      // Limpieza de localStorage y caché
+      window.localStorage.removeItem(FAVORITOS_KEY);
+      window.localStorage.removeItem('theme');
+      favoritosCache = null;
     },
 
     async updatePreferences(preferences) {
@@ -121,13 +128,20 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async getFavorites() {
-      // Primero intenta leer de caché en memoria
+      // Siempre intenta leer de caché en memoria
       if (favoritosCache) return favoritosCache;
-      // Luego intenta leer de localStorage
-      const local = window.localStorage.getItem(FAVORITOS_KEY);
-      if (local) {
-        favoritosCache = JSON.parse(local);
-        return favoritosCache;
+      // Luego intenta leer de localStorage con validación robusta
+      let local = null;
+      try {
+        local = window.localStorage.getItem(FAVORITOS_KEY);
+        if (local) {
+          favoritosCache = JSON.parse(local);
+          return favoritosCache;
+        }
+      } catch (e) {
+        // Si hay error, limpiar localStorage corrupto y caché
+        window.localStorage.removeItem(FAVORITOS_KEY);
+        favoritosCache = null;
       }
       // Si no hay en localStorage, pide al backend
       try {
@@ -136,6 +150,10 @@ export const useAuthStore = defineStore('auth', {
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
+        // Si el error es 403, limpiar sesión y localStorage
+        if (error.response && error.response.status === 403) {
+          this.logout();
+        }
         console.error('Error al obtener favoritos:', error);
         throw error;
       }
@@ -145,6 +163,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await axios.post(`${API_URL}/api/auth/favorites/add`, { pokemonName });
         favoritosCache = response.data.favorites;
+        // Siempre sincronizar localStorage
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
@@ -157,6 +176,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await axios.post(`${API_URL}/api/auth/favorites/remove`, { pokemonName });
         favoritosCache = response.data.favorites;
+        // Siempre sincronizar localStorage
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
