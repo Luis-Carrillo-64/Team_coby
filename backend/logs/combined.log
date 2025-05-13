@@ -1,0 +1,4 @@
+{"level":"info","message":"Servidor corriendo en puerto 3000","timestamp":"2025-05-13T18:50:26.712Z"}
+{"level":"info","message":"Conectado a MongoDB","timestamp":"2025-05-13T18:50:26.763Z"}
+{"level":"info","message":{"duration":"43ms","ip":"::1","method":"GET","status":200,"url":"/","userAgent":"Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.19041.5737"},"timestamp":"2025-05-13T18:50:38.984Z"}
+{"level":"info","message":{"duration":"2ms","ip":"::1","method":"GET","status":401,"url":"/users","userAgent":"Mozilla/5.0 (Windows NT; Windows NT 10.0; es-MX) WindowsPowerShell/5.1.19041.5737"},"timestamp":"2025-05-13T18:51:56.735Z"}
