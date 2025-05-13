@@ -3,6 +3,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const API_URL = import.meta.env.VITE_API_URL;
+const FAVORITOS_KEY = 'favoritos';
+let favoritosCache = null;
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -113,9 +115,20 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async getFavorites() {
+      // Primero intenta leer de caché en memoria
+      if (favoritosCache) return favoritosCache;
+      // Luego intenta leer de localStorage
+      const local = window.localStorage.getItem(FAVORITOS_KEY);
+      if (local) {
+        favoritosCache = JSON.parse(local);
+        return favoritosCache;
+      }
+      // Si no hay en localStorage, pide al backend
       try {
         const response = await axios.get(`${API_URL}/api/auth/favorites`);
-        return response.data.favorites;
+        favoritosCache = response.data.favorites;
+        window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
+        return favoritosCache;
       } catch (error) {
         console.error('Error al obtener favoritos:', error);
         throw error;
@@ -125,7 +138,9 @@ export const useAuthStore = defineStore('auth', {
     async addFavorite(pokemonName) {
       try {
         const response = await axios.post(`${API_URL}/api/auth/favorites/add`, { pokemonName });
-        return response.data.favorites;
+        favoritosCache = response.data.favorites;
+        window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
+        return favoritosCache;
       } catch (error) {
         console.error('Error al agregar favorito:', error);
         throw error;
@@ -135,7 +150,9 @@ export const useAuthStore = defineStore('auth', {
     async removeFavorite(pokemonName) {
       try {
         const response = await axios.post(`${API_URL}/api/auth/favorites/remove`, { pokemonName });
-        return response.data.favorites;
+        favoritosCache = response.data.favorites;
+        window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
+        return favoritosCache;
       } catch (error) {
         console.error('Error al quitar favorito:', error);
         throw error;
