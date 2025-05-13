@@ -15,10 +15,11 @@ export const usePokemonStore = defineStore('pokemon', {
   }),
 
   actions: {
-    async fetchPokemon(page = 1, limit = 10) {
+    async fetchPokemon(page = 1, limit = 10, filters = {}) {
       this.loading = true;
       try {
-        const response = await axios.get(`http://localhost:3000/api/pokemon?page=${page}&limit=${limit}`);
+        const params = { page, limit, ...filters };
+        const response = await axios.get('http://localhost:3000/api/pokemon', { params });
         this.pokemon = response.data.pokemon;
         this.pagination = {
           currentPage: response.data.currentPage,

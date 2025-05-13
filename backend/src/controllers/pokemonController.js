@@ -7,12 +7,64 @@ exports.getAllPokemon = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const pokemon = await Pokemon.find()
+    // Filtros
+    const andFilters = [];
+
+    // Filtro por nombre (empieza con la letra)
+    if (req.query.letter) {
+      andFilters.push({ name: new RegExp('^' + req.query.letter, 'i') });
+    }
+
+    // Filtro por tipos (uno o varios)
+    if (req.query.types) {
+      const types = Array.isArray(req.query.types) ? req.query.types : req.query.types.split(',');
+      andFilters.push({ types: { $in: types } });
+    }
+
+    // Filtro por generación (rango de número)
+    if (req.query.generation) {
+      const generations = {
+        '1': { start: 1, end: 151 },
+        '2': { start: 152, end: 251 },
+        '3': { start: 252, end: 386 },
+        '4': { start: 387, end: 493 },
+        '5': { start: 494, end: 649 },
+        '6': { start: 650, end: 721 },
+        '7': { start: 722, end: 809 }
+      };
+      const gen = generations[req.query.generation];
+      if (gen) {
+        andFilters.push({ number: { $gte: gen.start, $lte: gen.end } });
+      }
+    }
+
+    // Filtro por estadística
+    if (req.query.stat && req.query.statValue && req.query.statOp) {
+      const statField = `stats.${req.query.stat}`;
+      const value = parseInt(req.query.statValue);
+      let statFilter = {};
+      switch (req.query.statOp) {
+        case '>': statFilter[statField] = { $gt: value }; break;
+        case '<': statFilter[statField] = { $lt: value }; break;
+        case '=': statFilter[statField] = value; break;
+      }
+      andFilters.push(statFilter);
+    }
+
+    // Filtro por búsqueda de texto (nombre)
+    if (req.query.search) {
+      andFilters.push({ name: new RegExp(req.query.search, 'i') });
+    }
+
+    // Combinar todos los filtros
+    const filter = andFilters.length > 0 ? { $and: andFilters } : {};
+
+    const pokemon = await Pokemon.find(filter)
       .skip(skip)
       .limit(limit)
       .sort({ number: 1 });
 
-    const total = await Pokemon.countDocuments();
+    const total = await Pokemon.countDocuments(filter);
 
     res.json({
       pokemon,
