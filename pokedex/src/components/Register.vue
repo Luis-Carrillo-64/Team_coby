@@ -30,6 +30,7 @@
               class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Usuario"
             />
+            <div v-if="username && username.length < 3" class="text-xs text-red-600 mt-1">El usuario debe tener al menos 3 caracteres.</div>
           </div>
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
@@ -42,6 +43,7 @@
               class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Email"
             />
+            <div v-if="email && !email.includes('@')" class="text-xs text-red-600 mt-1">El email debe ser válido.</div>
           </div>
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Contraseña</label>
@@ -54,6 +56,7 @@
               class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Contraseña"
             />
+            <div v-if="password && password.length < 6" class="text-xs text-red-600 mt-1">La contraseña debe tener al menos 6 caracteres.</div>
           </div>
           <div>
             <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Confirmar Contraseña</label>
@@ -66,7 +69,17 @@
               class="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-pokemon-blue dark:focus:ring-pokemon-red shadow text-base sm:text-lg transition-all duration-200"
               placeholder="Confirmar Contraseña"
             />
+            <div v-if="confirmPassword && password !== confirmPassword" class="text-xs text-red-600 mt-1">Las contraseñas no coinciden.</div>
           </div>
+        </div>
+        <!-- Mensaje de requisitos mínimos -->
+        <div class="text-xs text-gray-600 dark:text-gray-300 mb-2 mt-2">
+          <ul class="list-disc ml-5">
+            <li>El usuario debe tener <b>al menos 3 caracteres</b>.</li>
+            <li>El email debe ser válido (contener <b>@</b>).</li>
+            <li>La contraseña debe tener <b>al menos 6 caracteres</b>.</li>
+            <li>La confirmación debe coincidir con la contraseña.</li>
+          </ul>
         </div>
         <div>
           <button

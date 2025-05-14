@@ -37,7 +37,7 @@ app.use('/api/pokemon', pokemonRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
-  logger.error('Error:', {
+  logger.error({
     message: err.message,
     stack: err.stack,
     url: req.url,
