@@ -1,0 +1,71 @@
+[{
+  "_id": {
+    "$oid": "681e4b3c8d7712d4fe448673"
+  },
+  "username": "admin",
+  "email": "admin@gmail.com",
+  "password": "$2a$10$hsbn2nwX8419.tZTvp3IleWKqZCFbgvPDMuujLjuSEhf6iVdPsddi",
+  "role": "admin",
+  "preferences": {
+    "theme": "light"
+  },
+  "createdAt": {
+    "$date": "2025-05-09T18:36:44.653Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-11T02:26:26.483Z"
+  },
+  "__v": 15,
+  "favorites": [
+    "Lapras"
+  ]
+},
+{
+  "_id": {
+    "$oid": "681e99394a51c1091b182579"
+  },
+  "username": "Luis",
+  "email": "luis@gmail.com",
+  "password": "$2a$10$Gwxz8MDyQ89YOL/ROHmDYeQscKqZ87v7XgWvZpUf1LQ.jzysu/wxW",
+  "role": "user",
+  "preferences": {
+    "theme": "light"
+  },
+  "createdAt": {
+    "$date": "2025-05-10T00:09:29.271Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T17:39:21.178Z"
+  },
+  "__v": 18,
+  "favorites": [
+    "Lapras",
+    "Ivysaur",
+    "Scizor",
+    "Pikachu"
+  ]
+},
+{
+  "_id": {
+    "$oid": "682045cc9887066ab840f820"
+  },
+  "username": "Ivan",
+  "email": "ivan@gmail.com",
+  "password": "$2a$10$MMz/.4nvoM19W8coDI/d4.XzmvW7nMFpYTizF35mwMW6P89Sjr6Wy",
+  "role": "user",
+  "favorites": [
+    "Squirtle",
+    "Mewtwo",
+    "Dragonite"
+  ],
+  "preferences": {
+    "theme": "light"
+  },
+  "createdAt": {
+    "$date": "2025-05-11T06:38:04.333Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-11T06:44:19.784Z"
+  },
+  "__v": 9
+}]

@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@iconify/vue": "^5.0.0"
+    "@iconify/vue": "^5.0.0",
+    "@vitejs/plugin-vue": "^5.2.4"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

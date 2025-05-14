@@ -1,0 +1,4 @@
+# Ignorar archivos de entorno
+.env
+pokedex/.env
+backend/.env
