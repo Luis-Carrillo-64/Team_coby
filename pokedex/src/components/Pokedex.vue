@@ -4,7 +4,7 @@
     <div class="absolute inset-0 bg-[#8bac0f] dark:bg-[#306230] opacity-20 pointer-events-none"></div>
 
     <!-- Tabs para ver todos o solo favoritos -->
-    <div v-if="auth.isAuthenticated" class="flex justify-center mt-6 mb-2 gap-4">
+    <div class="flex justify-center mt-6 mb-2 gap-4">
       <button
         @click="activeTab = 'all'"
         :class="activeTab === 'all' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
@@ -13,6 +13,7 @@
         Todos
       </button>
       <button
+        v-if="auth.isAuthenticated"
         @click="activeTab = 'favorites'"
         :class="activeTab === 'favorites' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
         class="px-6 py-2 rounded-lg font-bold shadow border border-pokemon-red dark:border-pokemon-blue transition-colors"
@@ -25,7 +26,7 @@
     <div class="flex justify-center mt-6 px-4">
       <div class="relative w-full max-w-xl">
         <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-        <div class="relative flex">
+        <div class="relative flex gap-2">
           <input
             type="text"
             v-model="searchQuery"
@@ -33,6 +34,15 @@
             placeholder="Buscar Pokémon..."
             class="w-full py-3 pl-5 pr-12 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f] font-pixel text-sm placeholder-[#0f380f] dark:placeholder-[#9bbc0f] placeholder-opacity-50"
           />
+          <button
+            @click="showFilters = true"
+            class="relative group"
+          >
+            <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+            <div class="relative px-4 py-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+              <Icon icon="mdi:filter-variant" class="w-6 h-6 text-[#0f380f] dark:text-[#9bbc0f]" />
+            </div>
+          </button>
           <div v-if="loading" class="absolute right-3 top-1/2 -translate-y-1/2">
             <svg class="animate-spin h-5 w-5 text-[#0f380f] dark:text-[#9bbc0f]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -44,7 +54,7 @@
     </div>
 
     <!-- Grid de Pokémon -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-8">
+    <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-2 sm:p-4 md:p-8 transition-all duration-300">
       <div
         v-for="pokemon in filteredPokemonList"
         :key="pokemon._id"
@@ -98,46 +108,71 @@
       </div>
     </div>
 
-    <!-- Paginación -->
+    <!-- Paginación Mejorada -->
     <div class="flex justify-center pb-8">
       <nav class="relative z-0 inline-flex gap-2">
+        <!-- Ir a la primera página -->
+        <button
+          :disabled="currentPage === 1"
+          @click="changePage(1)"
+          class="relative group"
+        >
+          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">«</span>
+          </div>
+        </button>
+        <!-- Página anterior -->
         <button
           :disabled="currentPage === 1"
           @click="changePage(currentPage - 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
-            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">Anterior</span>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">‹</span>
           </div>
         </button>
-        
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          @click="changePage(page)"
-          class="relative group"
-        >
-          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div 
-            class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]"
-            :class="currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
+        <!-- Números de página con puntos suspensivos -->
+        <template v-for="page in paginationRange" :key="page">
+          <span v-if="page === '...'" class="px-3 py-2 font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-lg">...</span>
+          <button
+            v-else
+            @click="changePage(page)"
+            class="relative group"
           >
-            <span 
-              class="font-pixel text-sm"
-              :class="currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
-            >{{ page }}</span>
-          </div>
-        </button>
-
+            <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+            <div
+              class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]"
+              :class="currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
+            >
+              <span
+                class="font-pixel text-sm"
+                :class="currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
+              >{{ page }}</span>
+            </div>
+          </button>
+        </template>
+        <!-- Página siguiente -->
         <button
           :disabled="currentPage === totalPages"
           @click="changePage(currentPage + 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
-          <div class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
-            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">Siguiente</span>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">›</span>
+          </div>
+        </button>
+        <!-- Ir a la última página -->
+        <button
+          :disabled="currentPage === totalPages"
+          @click="changePage(totalPages)"
+          class="relative group"
+        >
+          <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+          <div class="relative px-3 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+            <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f] text-sm">»</span>
           </div>
         </button>
       </nav>
@@ -145,11 +180,11 @@
 
     <!-- Modal de detalles -->
     <Transition name="modal">
-      <div v-if="selectedPokemon" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="selectedPokemon" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
         <!-- Fondo difuminado y clickeable para cerrar -->
         <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="selectedPokemon = null"></div>
         <!-- Modal principal -->
-        <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-8 animate-slide-in-up">
+        <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
           <!-- Botón de cerrar -->
           <button @click="selectedPokemon = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
             <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
@@ -258,11 +293,157 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Modal de Filtros -->
+    <Transition name="modal">
+      <div v-if="showFilters" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
+        <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="showFilters = false"></div>
+        <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
+          <button @click="showFilters = false" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
+            <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
+          </button>
+
+          <h2 class="text-2xl font-pixel text-[#0f380f] dark:text-[#9bbc0f] mb-6">Filtros</h2>
+
+          <!-- Filtro por Letra -->
+          <div class="mb-6">
+            <h3 class="font-pixel text-lg text-[#0f380f] dark:text-[#9bbc0f] mb-3">Filtrar por Letra</h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')"
+                :key="letter"
+                @click="selectedLetter = selectedLetter === letter ? null : letter"
+                :class="selectedLetter === letter ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]'"
+                class="w-10 h-10 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] font-pixel hover:scale-110 transition-transform"
+              >
+                {{ letter }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtro por Tipos -->
+          <div class="mb-6">
+            <h3 class="font-pixel text-lg text-[#0f380f] dark:text-[#9bbc0f] mb-3">Filtrar por Tipos</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <label
+                v-for="type in Object.keys(typeColors)"
+                :key="type"
+                class="relative flex items-center p-3 rounded-lg border-2 cursor-pointer hover:scale-105 transition-transform"
+                :style="`background:${typeColors[type].bg};border-color:${typeColors[type].border};color:${typeColors[type].text}`"
+              >
+                <input
+                  type="checkbox"
+                  v-model="selectedTypes"
+                  :value="type"
+                  class="sr-only"
+                />
+                <span class="font-pixel">{{ type }}</span>
+                <div
+                  v-if="selectedTypes.includes(type)"
+                  class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center"
+                >
+                  <Icon icon="mdi:check" class="w-3 h-3 text-[#0f380f]" />
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Filtro por Generación -->
+          <div class="mb-6">
+            <h3 class="font-pixel text-lg text-[#0f380f] dark:text-[#9bbc0f] mb-3">Filtrar por Generación</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <button
+                v-for="gen in generations"
+                :key="gen.name"
+                @click="selectedGeneration = selectedGeneration === gen.name ? null : gen.name"
+                :class="selectedGeneration === gen.name ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]'"
+                class="p-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] font-pixel hover:scale-105 transition-transform"
+              >
+                {{ gen.name }}
+                <div class="text-sm opacity-75">{{ gen.range }}</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtro por Estadísticas -->
+          <div class="mb-6">
+            <h3 class="font-pixel text-lg text-[#0f380f] dark:text-[#9bbc0f] mb-3">Filtrar por Estadísticas</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="relative">
+                <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+                <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
+                  <select
+                    v-model="selectedStat"
+                    class="w-full bg-transparent text-[#0f380f] dark:text-[#9bbc0f] font-pixel border-2 border-[#0f380f] dark:border-[#9bbc0f] rounded-lg p-2"
+                  >
+                    <option value="">Seleccionar estadística</option>
+                    <option value="hp">HP</option>
+                    <option value="attack">Ataque</option>
+                    <option value="defense">Defensa</option>
+                    <option value="specialAttack">Ataque Especial</option>
+                    <option value="specialDefense">Defensa Especial</option>
+                    <option value="speed">Velocidad</option>
+                  </select>
+                </div>
+              </div>
+              <div class="relative">
+                <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+                <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
+                  <select
+                    v-model="statOperator"
+                    class="w-full bg-transparent text-[#0f380f] dark:text-[#9bbc0f] font-pixel border-2 border-[#0f380f] dark:border-[#9bbc0f] rounded-lg p-2"
+                  >
+                    <option value=">">Mayor que</option>
+                    <option value="<">Menor que</option>
+                    <option value="=">Igual a</option>
+                  </select>
+                </div>
+              </div>
+              <div class="relative md:col-span-2">
+                <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+                <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
+                  <input
+                    type="number"
+                    v-model="statValue"
+                    min="0"
+                    max="255"
+                    placeholder="Valor de la estadística"
+                    class="w-full bg-transparent text-[#0f380f] dark:text-[#9bbc0f] font-pixel border-2 border-[#0f380f] dark:border-[#9bbc0f] rounded-lg p-2"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="flex justify-end gap-4">
+            <button
+              @click="clearFilters"
+              class="relative group"
+            >
+              <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+              <div class="relative px-6 py-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+                <span class="font-pixel text-[#0f380f] dark:text-[#9bbc0f]">Limpiar Filtros</span>
+              </div>
+            </button>
+            <button
+              @click="applyFilters"
+              class="relative group"
+            >
+              <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+              <div class="relative px-6 py-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#0f380f] dark:bg-[#9bbc0f]">
+                <span class="font-pixel text-[#8bac0f] dark:text-[#306230]">Aplicar Filtros</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { usePokemonStore } from '../stores/pokemon';
 import { useDebounceFn } from '@vueuse/core';
@@ -280,6 +461,13 @@ const currentPage = ref(1);
 const itemsPerPage = 12;
 const showAllMoves = ref(false);
 const activeTab = ref('all');
+const showFilters = ref(false);
+const selectedLetter = ref(null);
+const selectedTypes = ref([]);
+const selectedGeneration = ref(null);
+const selectedStat = ref('');
+const statOperator = ref('>');
+const statValue = ref('');
 
 const isAdmin = computed(() => auth.user?.role === 'admin');
 const pokemonList = computed(() => pokemon.pokemon);
@@ -307,9 +495,13 @@ const toggleFavorite = async (pokemonName) => {
   loadingFavoritos.value = true;
   try {
     if (isFavorite(pokemonName)) {
-      favoritos.value = await auth.removeFavorite(pokemonName);
+      await auth.removeFavorite(pokemonName);
     } else {
-      favoritos.value = await auth.addFavorite(pokemonName);
+      await auth.addFavorite(pokemonName);
+    }
+    favoritos.value = await auth.getFavorites();
+    if (activeTab.value === 'favorites') {
+      await pokemon.fetchAllPokemon();
     }
   } catch (e) {}
   loadingFavoritos.value = false;
@@ -351,11 +543,6 @@ const handleSearch = useDebounceFn(async () => {
 
 const fetchPokemon = async () => {
   await pokemon.fetchPokemon(currentPage.value, itemsPerPage);
-};
-
-const changePage = async (page) => {
-  currentPage.value = page;
-  await fetchPokemon();
 };
 
 async function fetchPokeApiData(pokemon) {
@@ -436,17 +623,189 @@ const handleCreatePokemon = async () => {
   await fetchPokemon();
 };
 
-const filteredPokemonList = computed(() => {
-  if (activeTab.value === 'favorites' && auth.isAuthenticated) {
-    return pokemonList.value.filter(p => favoritos.value.includes(p.name));
+const generations = [
+  { name: 'Generación I (Kanto)', range: '#001 - #151' },
+  { name: 'Generación II (Johto)', range: '#152 - #251' },
+  { name: 'Generación III (Hoenn)', range: '#252 - #386' },
+  { name: 'Generación IV (Sinnoh)', range: '#387 - #493' },
+  { name: 'Generación V (Unova)', range: '#494 - #649' },
+  { name: 'Generación VI (Kalos)', range: '#650 - #721' },
+  { name: 'Generación VII (Alola)', range: '#722 - #809' }
+];
+
+const clearFilters = () => {
+  selectedLetter.value = null;
+  selectedTypes.value = [];
+  selectedGeneration.value = null;
+  selectedStat.value = '';
+  statOperator.value = '>';
+  statValue.value = '';
+};
+
+const applyFilters = () => {
+  showFilters.value = false;
+};
+
+const allPokemonLoaded = ref(false);
+const allPokemonList = ref([]);
+
+const getGenerationNumber = (genString) => {
+  if (!genString) return '';
+  if (genString.includes('I (Kanto)')) return '1';
+  if (genString.includes('II (Johto)')) return '2';
+  if (genString.includes('III (Hoenn)')) return '3';
+  if (genString.includes('IV (Sinnoh)')) return '4';
+  if (genString.includes('V (Unova)')) return '5';
+  if (genString.includes('VI (Kalos)')) return '6';
+  if (genString.includes('VII (Alola)')) return '7';
+  return '';
+};
+
+const filters = computed(() => {
+  const f = {};
+  if (selectedLetter.value) f.letter = selectedLetter.value;
+  if (selectedTypes.value.length > 0) f.types = selectedTypes.value.join(',');
+  if (selectedGeneration.value) f.generation = getGenerationNumber(selectedGeneration.value);
+  if (selectedStat.value && statValue.value) {
+    f.stat = selectedStat.value;
+    f.statOp = statOperator.value;
+    f.statValue = statValue.value;
   }
-  return pokemonList.value;
+  if (searchQuery.value) f.search = searchQuery.value;
+  console.log('Filtros enviados al backend:', f);
+  return f;
+});
+
+const fetchFilteredPokemon = async () => {
+  if (activeTab.value === 'favorites') {
+    if (!allPokemonLoaded.value) {
+      await pokemon.fetchAllPokemon();
+      allPokemonList.value = [...pokemon.pokemon];
+      allPokemonLoaded.value = true;
+    }
+  } else {
+    await pokemon.fetchPokemon(currentPage.value, itemsPerPage, filters.value);
+  }
+};
+
+const filteredFavorites = computed(() => {
+  let filtered = allPokemonList.value;
+  if (selectedLetter.value) filtered = filtered.filter(p => p.name.startsWith(selectedLetter.value));
+  if (selectedTypes.value.length > 0) filtered = filtered.filter(p => selectedTypes.value.some(type => p.types.includes(type)));
+  if (selectedGeneration.value) {
+    const gens = {
+      '1': [1, 151], '2': [152, 251], '3': [252, 386], '4': [387, 493], '5': [494, 649], '6': [650, 721], '7': [722, 809]
+    };
+    const genNum = getGenerationNumber(selectedGeneration.value);
+    if (gens[genNum]) {
+      filtered = filtered.filter(p => p.number >= gens[genNum][0] && p.number <= gens[genNum][1]);
+    }
+  }
+  if (selectedStat.value && statValue.value) {
+    const value = parseInt(statValue.value);
+    filtered = filtered.filter(p => {
+      if (!p.stats || !p.stats[selectedStat.value]) return false;
+      const statValue_ = p.stats[selectedStat.value];
+      switch (statOperator.value) {
+        case '>': return statValue_ > value;
+        case '<': return statValue_ < value;
+        case '=': return statValue_ === value;
+        default: return true;
+      }
+    });
+  }
+  const favs = favoritos.value.map(f => f.toLowerCase());
+  filtered = filtered.filter(p => favs.includes(p.name.toLowerCase()));
+  return filtered;
+});
+
+const paginatedFavorites = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredFavorites.value.slice(start, end);
+});
+
+const filteredPokemonList = computed(() => {
+  if (activeTab.value === 'favorites') {
+    return paginatedFavorites.value;
+  } else {
+    return pokemonList.value;
+  }
+});
+
+const totalPagesComputed = computed(() => {
+  if (activeTab.value === 'favorites') {
+    return Math.ceil(filteredFavorites.value.length / itemsPerPage) || 1;
+  } else {
+    return totalPages.value;
+  }
+});
+
+const paginationRange = computed(() => {
+  const total = totalPagesComputed.value;
+  const current = currentPage.value;
+  const delta = 2;
+  const range = [];
+  let l = Math.max(2, current - delta);
+  let r = Math.min(total - 1, current + delta);
+  range.push(1);
+  if (l > 2) range.push('...');
+  for (let i = l; i <= r; i++) range.push(i);
+  if (r < total - 1) range.push('...');
+  if (total > 1) range.push(total);
+  return range;
+});
+
+const changePage = async (page) => {
+  currentPage.value = page;
+  if (activeTab.value === 'favorites') {
+    // No recargar del backend
+  } else {
+    await fetchFilteredPokemon();
+  }
+};
+
+const isAnyFilterActive = computed(() => {
+  return (
+    selectedLetter.value ||
+    selectedTypes.value.length > 0 ||
+    selectedGeneration.value ||
+    (selectedStat.value && statValue.value)
+  );
+});
+
+watch([
+  selectedLetter,
+  selectedTypes,
+  selectedGeneration,
+  selectedStat,
+  statOperator,
+  statValue,
+  searchQuery,
+  activeTab
+], async ([, , , , , , , newTab], [,,,,,, , oldTab]) => {
+  currentPage.value = 1;
+  if (activeTab.value === 'favorites') {
+    if (!auth.isAuthenticated) {
+      favoritos.value = [];
+      return;
+    }
+    if (!allPokemonLoaded.value) {
+      await pokemon.fetchAllPokemon();
+      allPokemonList.value = [...pokemon.pokemon];
+      allPokemonLoaded.value = true;
+    }
+    favoritos.value = await auth.getFavorites();
+  }
+  await fetchFilteredPokemon();
 });
 
 onMounted(async () => {
-  await fetchPokemon();
+  await fetchFilteredPokemon();
   if (auth.isAuthenticated) {
     favoritos.value = await auth.getFavorites();
+  } else {
+    favoritos.value = [];
   }
 });
 </script>

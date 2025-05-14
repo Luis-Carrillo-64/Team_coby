@@ -1,8 +1,20 @@
 import { defineStore } from 'pinia';
 
+function getInitialTheme() {
+  try {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark' || theme === 'light') return theme;
+    // Si hay datos corruptos, limpiar
+    localStorage.removeItem('theme');
+    return 'light';
+  } catch {
+    return 'light';
+  }
+}
+
 export const useThemeStore = defineStore('theme', {
   state: () => ({
-    theme: localStorage.getItem('theme') || 'light',
+    theme: getInitialTheme(),
   }),
   actions: {
     setTheme(theme) {

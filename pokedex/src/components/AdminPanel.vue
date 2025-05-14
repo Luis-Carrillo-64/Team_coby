@@ -26,7 +26,7 @@
         </div>
       </header>
 
-      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main class="max-w-7xl mx-auto py-6 px-2 sm:px-6 lg:px-8 transition-all duration-300">
         <!-- Tabs -->
         <div class="flex gap-4 mb-8">
           <button @click="activeTab = 'pokemon'" :class="activeTab === 'pokemon' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'" class="px-6 py-2 rounded-lg font-bold shadow border border-pokemon-red dark:border-pokemon-blue transition-colors">Pokémon</button>
@@ -36,7 +36,7 @@
         <!-- Gestión de Pokémon -->
         <div v-if="activeTab === 'pokemon'">
           <!-- Formulario para crear/editar Pokémon -->
-          <div class="bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl border-t-4 border-pokemon-red dark:border-pokemon-blue">
+          <div class="bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl p-2 sm:p-6 transition-all duration-300">
             <div class="px-4 py-5 sm:p-6">
               <h3 class="text-lg leading-6 font-medium text-pokemon-red dark:text-pokemon-blue">
                 {{ editingPokemon ? 'Editar Pokémon' : 'Crear Nuevo Pokémon' }}
@@ -170,9 +170,9 @@
           </div>
 
           <!-- Tabla de Pokémon -->
-          <div class="mt-8 bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl p-6">
+          <div class="mt-8 bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl p-2 sm:p-6 transition-all duration-300">
             <h3 class="text-lg font-bold mb-4 text-pokemon-red dark:text-pokemon-blue">Lista de Pokémon</h3>
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm md:text-base">
               <thead>
                 <tr>
                   <th class="px-4 py-2 text-left">Nombre</th>
@@ -198,9 +198,9 @@
 
         <!-- Gestión de Usuarios -->
         <div v-if="activeTab === 'users'">
-          <div class="bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl p-6">
+          <div class="bg-white/90 dark:bg-[#223c2a]/90 shadow-lg rounded-3xl p-2 sm:p-6 transition-all duration-300">
             <h3 class="text-lg font-bold mb-4 text-pokemon-red dark:text-pokemon-blue">Lista de Usuarios</h3>
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm md:text-base">
               <thead>
                 <tr>
                   <th class="px-4 py-2 text-left">Nombre</th>
@@ -233,8 +233,8 @@
 
   <!-- MODAL USUARIO -->
   <template v-if="showUserModal">
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div class="bg-white dark:bg-[#223c2a] rounded-2xl p-8 shadow-2xl w-full max-w-md relative">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-2 sm:px-8">
+      <div class="bg-white dark:bg-[#223c2a] rounded-2xl p-4 sm:p-8 shadow-2xl w-full max-w-md relative animate-fade-in transition-all duration-300">
         <button @click="showUserModal = false" class="absolute top-2 right-2 text-2xl">×</button>
         <h2 class="text-xl font-bold mb-4 text-pokemon-red dark:text-pokemon-blue">{{ editingUser ? 'Editar Usuario' : 'Crear Usuario' }}</h2>
         <form @submit.prevent="saveUser" class="space-y-4">
@@ -268,8 +268,8 @@
 
   <!-- MODAL CONFIRMACIÓN ELIMINAR -->
   <template v-if="showDeleteModal">
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div class="bg-white dark:bg-[#223c2a] rounded-2xl p-8 shadow-2xl w-full max-w-sm relative">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-2 sm:px-8">
+      <div class="bg-white dark:bg-[#223c2a] rounded-2xl p-4 sm:p-8 shadow-2xl w-full max-w-sm relative animate-fade-in transition-all duration-300">
         <button @click="showDeleteModal = false" class="absolute top-2 right-2 text-2xl">×</button>
         <h2 class="text-xl font-bold mb-4 text-pokemon-red dark:text-pokemon-blue">¿Estás seguro?</h2>
         <p class="mb-6">Esta acción no se puede deshacer.</p>

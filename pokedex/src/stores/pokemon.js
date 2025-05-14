@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const usePokemonStore = defineStore('pokemon', {
   state: () => ({
     pokemon: [],
@@ -15,10 +17,11 @@ export const usePokemonStore = defineStore('pokemon', {
   }),
 
   actions: {
-    async fetchPokemon(page = 1, limit = 10) {
+    async fetchPokemon(page = 1, limit = 10, filters = {}) {
       this.loading = true;
       try {
-        const response = await axios.get(`http://localhost:3000/api/pokemon?page=${page}&limit=${limit}`);
+        const params = { page, limit, ...filters };
+        const response = await axios.get(`${API_URL}/api/pokemon`, { params });
         this.pokemon = response.data.pokemon;
         this.pagination = {
           currentPage: response.data.currentPage,
@@ -36,7 +39,7 @@ export const usePokemonStore = defineStore('pokemon', {
     async fetchPokemonById(id) {
       this.loading = true;
       try {
-        const response = await axios.get(`http://localhost:3000/api/pokemon/${id}`);
+        const response = await axios.get(`${API_URL}/api/pokemon/${id}`);
         this.currentPokemon = response.data;
       } catch (error) {
         this.error = 'Error al cargar el Pokemon';
@@ -49,7 +52,7 @@ export const usePokemonStore = defineStore('pokemon', {
     async searchPokemon(query) {
       this.loading = true;
       try {
-        const response = await axios.get(`http://localhost:3000/api/pokemon/search?query=${query}`);
+        const response = await axios.get(`${API_URL}/api/pokemon/search?query=${query}`);
         this.pokemon = response.data;
       } catch (error) {
         this.error = 'Error en la búsqueda';
@@ -63,7 +66,7 @@ export const usePokemonStore = defineStore('pokemon', {
     async createPokemon(pokemonData) {
       this.loading = true;
       try {
-        const response = await axios.post('http://localhost:3000/api/pokemon', pokemonData);
+        const response = await axios.post(`${API_URL}/api/pokemon`, pokemonData);
         return response.data;
       } catch (error) {
         this.error = 'Error al crear el Pokemon';
@@ -77,7 +80,7 @@ export const usePokemonStore = defineStore('pokemon', {
     async updatePokemon(id, pokemonData) {
       this.loading = true;
       try {
-        const response = await axios.put(`http://localhost:3000/api/pokemon/${id}`, pokemonData);
+        const response = await axios.put(`${API_URL}/api/pokemon/${id}`, pokemonData);
         return response.data;
       } catch (error) {
         this.error = 'Error al actualizar el Pokemon';
@@ -91,12 +94,26 @@ export const usePokemonStore = defineStore('pokemon', {
     async deletePokemon(id) {
       this.loading = true;
       try {
-        await axios.delete(`http://localhost:3000/api/pokemon/${id}`);
+        await axios.delete(`${API_URL}/api/pokemon/${id}`);
         return true;
       } catch (error) {
         this.error = 'Error al eliminar el Pokemon';
         console.error('Error:', error);
         throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchAllPokemon() {
+      this.loading = true;
+      try {
+        const response = await axios.get(`${API_URL}/api/pokemon/all`);
+        this.pokemon = response.data.pokemon;
+        // No actualizamos paginación aquí
+      } catch (error) {
+        this.error = 'Error al cargar todos los Pokemon';
+        console.error('Error:', error);
       } finally {
         this.loading = false;
       }
