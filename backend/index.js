@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { logger, limiter, requestLogger, helmetConfig } = require('./src/config/security');
+const { errorHandler } = require('./src/middleware/errorHandler');
+const { validateLogin, validateRegister, validateFavorite } = require('./src/middleware/validator');
 
 const authRoutes = require('./src/routes/auth');
 const pokemonRoutes = require('./src/routes/pokemon');
@@ -36,21 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/pokemon', pokemonRoutes);
 
 // Middleware de manejo de errores
-app.use((err, req, res, next) => {
-  logger.error({
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    ip: req.ip
-  });
-  
-  res.status(err.status || 500).json({
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Algo salió mal!' 
-      : err.message
-  });
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -22,10 +22,10 @@
           </router-link>
           <span v-if="isAuthenticated && isAdmin" class="px-2 py-1 rounded text-xs font-bold bg-[#eaf5c3] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]">{{ userName }} ({{ userRole }})</span>
           <span v-else-if="isAuthenticated" class="px-2 py-1 rounded text-xs font-bold bg-[#eaf5c3] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]">{{ userName }}</span>
-          <router-link v-if="!isAuthenticated" to="/login" class="px-4 py-2 rounded-full bg-[#0f380f] text-[#9bbc0f] font-bold shadow border border-[#0f380f] hover:scale-105 transition-transform">
+          <router-link v-if="!isAuthenticated" to="/login" class="px-4 py-2 rounded-full bg-[#0f380f] text-[#9bbc0f] dark:text-[#9bbc0f] font-bold shadow border border-[#0f380f] hover:scale-105 transition-transform">
             Iniciar Sesión
           </router-link>
-          <button v-else @click="logout" class="px-4 py-2 rounded-full bg-[#9bbc0f] text-[#0f380f] font-bold shadow border border-[#0f380f] hover:scale-105 transition-transform">
+          <button v-else @click="logout" class="px-4 py-2 rounded-full bg-[#9bbc0f] text-[#0f380f] dark:text-[#0f380f] font-bold shadow border border-[#0f380f] hover:scale-105 transition-transform">
             Cerrar Sesión
           </button>
         </div>
@@ -52,6 +52,9 @@ const userName = computed(() => auth.user?.username || '')
 const userRole = computed(() => auth.user?.role || '')
 const theme = computed(() => themeStore.theme)
 
+// Al cargar la aplicación, intentar verificar la autenticación
+auth.checkAuth();
+
 const logout = async () => {
   await auth.logout()
   router.push('/login')
@@ -61,3 +64,7 @@ const toggleTheme = () => {
   themeStore.toggleTheme()
 }
 </script> 
+
+<style scoped>
+/* Puedes añadir estilos adicionales aquí si es necesario */
+</style> 
