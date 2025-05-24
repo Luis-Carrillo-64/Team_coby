@@ -79,12 +79,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { Icon } from '@iconify/vue';
 
 const router = useRouter();
+const route = useRoute();
 const auth = useAuthStore();
 
 const username = ref('');
@@ -102,18 +103,40 @@ const isValid = computed(() => {
 });
 
 const handleSubmit = async () => {
+  if (!isValid.value) {
+    error.value = 'Por favor, completa todos los campos correctamente';
+    return;
+  }
+
   loading.value = true;
   error.value = '';
 
   try {
     await auth.login(username.value, password.value);
-    router.push('/pokedex');
+    
+    // Obtener la ruta de redirección de la query o usar la ruta por defecto
+    const redirectPath = route.query.redirect || '/pokedex';
+    router.push(redirectPath);
   } catch (e) {
-    error.value = 'Usuario o contraseña incorrectos';
+    console.error('Error en login:', e);
+    if (e.response?.status === 401) {
+      error.value = 'Usuario o contraseña incorrectos';
+    } else if (e.response?.status === 429) {
+      error.value = 'Demasiados intentos. Por favor, espera un momento';
+    } else {
+      error.value = 'Error al iniciar sesión. Por favor, intenta de nuevo';
+    }
   } finally {
     loading.value = false;
   }
 };
+
+// Limpiar el error cuando el usuario modifica los campos
+watch([username, password], () => {
+  if (error.value) {
+    error.value = '';
+  }
+});
 </script>
 
 <style>

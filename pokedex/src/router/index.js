@@ -16,25 +16,52 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
-    meta: { requiresGuest: true }
+    meta: { 
+      requiresGuest: true,
+      title: 'Iniciar Sesión'
+    }
   },
   {
     path: '/register',
     name: 'Register',
     component: Register,
-    meta: { requiresGuest: true }
+    meta: { 
+      requiresGuest: true,
+      title: 'Registro'
+    }
   },
   {
     path: '/pokedex',
     name: 'Pokedex',
     component: Pokedex,
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      title: 'Pokédex'
+    }
   },
   {
     path: '/admin',
     name: 'AdminPanel',
     component: AdminPanel,
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { 
+      requiresAuth: true, 
+      requiresAdmin: true,
+      title: 'Panel de Administración'
+    }
+  },
+  {
+    path: '/achievements',
+    name: 'Achievements',
+    component: () => import('../views/AchievementsView.vue'),
+    meta: { 
+      requiresAuth: true,
+      title: 'Logros'
+    }
+  },
+  // Ruta para manejar 404
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/pokedex'
   }
 ];
 
@@ -43,6 +70,7 @@ const router = createRouter({
   routes
 });
 
+// Middleware global para manejar la autenticación
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore();
   const isAuthenticated = auth.isAuthenticated;

@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { getAllPokemon, searchPokemon, getAllPokemonNoPaginate, getPokemonById, createPokemon, updatePokemon, deletePokemon } = require('../controllers/pokemonController');
 const { protect, restrictTo } = require('../middleware/auth');
+const { trackPokemonVisit } = require('../middleware/achievementProgress');
 
 // Rutas públicas
 router.get('/', getAllPokemon);
 router.get('/search', searchPokemon);
 router.get('/all', getAllPokemonNoPaginate);
-router.get('/:id', getPokemonById);
+
+// Rutas que requieren autenticación para tracking de logros
+router.get('/:id', protect, trackPokemonVisit, getPokemonById);
 
 // Rutas protegidas (solo admin)
 router.post('/', protect, restrictTo('admin'), createPokemon);

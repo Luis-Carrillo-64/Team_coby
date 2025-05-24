@@ -11,17 +11,20 @@ exports.protect = (req, res, next) => {
   }
 
   if (!token) {
+    console.log('protect: No token provided');
     return res.status(401).json({ message: 'Token no proporcionado' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      // Si el token es inválido o expirado, se manejará en el interceptor del frontend
-      return res.status(403).json({ message: 'Token inválido o expirado' });
-    }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('protect: Token verificado para usuario:', decoded.id);
     req.user = decoded;
     next();
-  });
+  } catch (err) {
+    console.log('protect: Token inválido o expirado:', err.message);
+    // Si el token es inválido o expirado, se manejará en el interceptor del frontend
+    return res.status(403).json({ message: 'Token inválido o expirado' });
+  }
 };
 
 // Middleware para restringir acceso por rol

@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   favorites: [{
-    type: String, // Puede ser el nombre o el ID del Pokémon
+    type: String,
     default: []
   }],
   preferences: {
@@ -36,9 +36,34 @@ const userSchema = new mongoose.Schema({
       enum: ['light', 'dark'],
       default: 'light'
     }
+  },
+  // Campos para logros
+  completedAchievements: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Achievement'
+  }],
+  achievementProgress: {
+    type: Map,
+    of: {
+      current: {
+        type: Number,
+        default: 0
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now
+      },
+      details: {
+        type: Object,
+        default: {}
+      }
+    },
+    default: new Map()
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // Hash password before saving
@@ -59,6 +84,47 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+// Método para actualizar el progreso de un logro
+userSchema.methods.updateAchievementProgress = async function(achievementId, progress, details = {}) {
+  const progressKey = achievementId.toString();
+  let currentProgress = this.achievementProgress.get(progressKey) || {
+    current: 0,
+    lastUpdated: Date.now(),
+    details: {}
+  };
 
-module.exports = User; 
+  currentProgress.current = progress;
+  currentProgress.lastUpdated = Date.now();
+  currentProgress.details = { ...currentProgress.details, ...details };
+
+  this.achievementProgress.set(progressKey, currentProgress);
+  return this.save();
+};
+
+// Método para marcar un logro como completado
+userSchema.methods.completeAchievement = async function(achievementId) {
+  const achievementIdStr = achievementId.toString();
+  if (!this.completedAchievements.some(id => id.toString() === achievementIdStr)) {
+    this.completedAchievements.push(achievementId);
+    return this.save();
+  }
+  return this;
+};
+
+// Método para obtener el progreso de un logro
+userSchema.methods.getAchievementProgress = function(achievementId) {
+  const progressKey = achievementId.toString();
+  return this.achievementProgress.get(progressKey) || {
+    current: 0,
+    lastUpdated: Date.now(),
+    details: {}
+  };
+};
+
+// Método para verificar si un logro está completado
+userSchema.methods.hasCompletedAchievement = function(achievementId) {
+  const achievementIdStr = achievementId.toString();
+  return this.completedAchievements.some(id => id.toString() === achievementIdStr);
+};
+
+module.exports = mongoose.model('User', userSchema); 

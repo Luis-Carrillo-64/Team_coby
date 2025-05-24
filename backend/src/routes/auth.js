@@ -18,6 +18,7 @@ router.put('/preferences', authController.updatePreferences);
 router.get('/favorites', authController.getFavorites);
 router.post('/favorites/add', validateFavorite, authController.addFavorite);
 router.post('/favorites/remove', validateFavorite, authController.removeFavorite);
+router.get('/me/achievements', authController.getMeAchievements);
 
 // Rutas de administrador
 router.use(restrictTo('admin')); // Middleware de restricción para rutas de admin
