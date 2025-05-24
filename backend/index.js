@@ -20,8 +20,9 @@ app.use(limiter);
 app.use(requestLogger);
 
 // CORS para desarrollo: permite peticiones desde el frontend local
+const allowedOrigin = process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:5173';
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigin,
   credentials: true
 }));
 
