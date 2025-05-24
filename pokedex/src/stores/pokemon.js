@@ -30,7 +30,11 @@ export const usePokemonStore = defineStore('pokemon', {
           total: response.data.total
         };
       } catch (error) {
-        this.error = 'Error al cargar los Pokemon';
+        if (!error.response) {
+          this.error = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.error = 'Error al cargar los Pokemon';
+        }
         console.error('Error:', error);
       } finally {
         this.loading = false;

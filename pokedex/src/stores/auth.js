@@ -83,7 +83,11 @@ export const useAuthStore = defineStore('auth', {
         this.users = response.data; // Asumiendo que la respuesta es un array de usuarios
         return this.users; // Devolver los datos
       } catch (error) {
-        this.errorUsers = 'Error al obtener usuarios.';
+        if (!error.response) {
+          this.errorUsers = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.errorUsers = 'Error al obtener usuarios.';
+        }
         console.error('Error fetching users:', error);
         throw error;
       }
@@ -147,9 +151,11 @@ export const useAuthStore = defineStore('auth', {
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
-        // Si el error es 401 (unauthorized), el interceptor ya manejará el refresh o logout
-        // Solo loguea si es otro tipo de error o si el interceptor ya falló
-        this.errorFavorites = 'Error al obtener favoritos.'; // Establecer error
+        if (!error.response) {
+          this.errorFavorites = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.errorFavorites = 'Error al obtener favoritos.';
+        }
         console.error('Error fetching favorites:', error);
         throw error;
       }
@@ -166,7 +172,11 @@ export const useAuthStore = defineStore('auth', {
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
-         this.errorFavorites = 'Error al agregar favorito.'; // Establecer error
+        if (!error.response) {
+          this.errorFavorites = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.errorFavorites = 'Error al agregar favorito.';
+        }
         console.error('Error al agregar favorito:', error);
         throw error;
       } finally {
@@ -185,7 +195,11 @@ export const useAuthStore = defineStore('auth', {
         window.localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritosCache));
         return favoritosCache;
       } catch (error) {
-        this.errorFavorites = 'Error al quitar favorito.'; // Establecer error
+        if (!error.response) {
+          this.errorFavorites = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.errorFavorites = 'Error al quitar favorito.';
+        }
         console.error('Error al quitar favorito:', error);
         throw error;
       } finally {
@@ -198,7 +212,11 @@ export const useAuthStore = defineStore('auth', {
         this.achievements = response.data; // Asumiendo que la respuesta es un array de logros
         return this.achievements; // Devolver los datos
       } catch (error) {
-        this.errorAchievements = 'Error al obtener logros.'; // Establecer error
+        if (!error.response) {
+          this.errorAchievements = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.errorAchievements = 'Error al obtener logros.';
+        }
         console.error('Error fetching achievements:', error);
         throw error;
       }
