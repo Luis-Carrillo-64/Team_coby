@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Achievement = require('../models/Achievement');
 const Pokemon = require('../models/Pokemon');
 const { achievementController } = require('../controllers/achievementController');
+const { AppError } = require('./errorHandler');
+const { processAchievement } = require('../controllers/achievementController');
 
 // Función auxiliar para obtener el total de Pokémon por generación
 const getTotalPokemonByGeneration = (generation) => {
@@ -19,12 +21,66 @@ const getTotalPokemonByGeneration = (generation) => {
   return totals[generation] || 0;
 };
 
+// Función auxiliar para validar tipos de Pokémon
+const validatePokemonType = (pokemonTypes, targetType) => {
+  if (!Array.isArray(pokemonTypes)) {
+    pokemonTypes = [pokemonTypes];
+  }
+  return pokemonTypes.includes(targetType);
+};
+
+// Función auxiliar para validar criterios específicos
+const validateSpecificCriteria = (achievement, details) => {
+  const { criteria } = achievement;
+  let cumple = true;
+
+  // Validar tipo de Pokémon (considerando tipos múltiples)
+  if (criteria.typeValue && details.pokemonTypes) {
+    if (!validatePokemonType(details.pokemonTypes, criteria.typeValue)) {
+      cumple = false;
+    }
+  }
+
+  // Validar generación
+  if (criteria.generation && details.pokemonGeneration) {
+    if (criteria.generation !== details.pokemonGeneration) {
+      cumple = false;
+    }
+  }
+
+  // Validar Pokémon específicos
+  if (criteria.targetPokemon && Array.isArray(criteria.targetPokemon)) {
+    if (!details.pokemonName || !criteria.targetPokemon.includes(details.pokemonName)) {
+      cumple = false;
+    }
+  }
+
+  // Validar si es legendario
+  if (criteria.isLegendary !== undefined && details.isLegendary !== undefined) {
+    if (criteria.isLegendary !== details.isLegendary) {
+      cumple = false;
+    }
+  }
+
+  // Validar estadísticas específicas
+  if (criteria.stat && details.statType) {
+    if (criteria.stat !== details.statType) {
+      cumple = false;
+    }
+  }
+
+  return cumple;
+};
+
 // Middleware para actualizar el progreso de logros
 const updateAchievementProgress = async (userId, actionType, details = {}) => {
   try {
+    console.log(`[Achievement Progress] Actualizando progreso para usuario ${userId}, acción: ${actionType}`);
+    console.log('[BACKEND][updateAchievementProgress] Recibido details:', details);
+
     const user = await User.findById(userId);
     if (!user) {
-      console.log(`Usuario no encontrado: ${userId}`);
+      console.error('[Achievement Progress] Usuario no encontrado:', userId);
       return;
     }
 
@@ -37,31 +93,62 @@ const updateAchievementProgress = async (userId, actionType, details = {}) => {
     for (const achievement of achievements) {
       const { criteria } = achievement;
       const progress = user.getAchievementProgress(achievement._id);
+
+      // Verificar si el elemento ya fue contado
+      if (details.pokemonId && user.hasCountedItem(achievement._id, details.pokemonId)) {
+        continue;
+      }
+
+      // Validar criterios específicos según el tipo de logro
       let cumple = true;
 
-      // Verificar criterios específicos
-      if (criteria.pokemonIds && Array.isArray(criteria.pokemonIds)) {
-        if (!details.pokemonId || !criteria.pokemonIds.map(String).includes(String(details.pokemonId))) {
-          cumple = false;
-        }
-      }
+      switch (actionType) {
+        case 'read_description':
+        case 'read_type':
+        case 'read_generation':
+        case 'read_specific':
+        case 'read_baby':
+        case 'read_legendary':
+        case 'read_breeding':
+        case 'read_evolution':
+          if (details.pokemonId) {
+            const pokemon = await Pokemon.findById(details.pokemonId);
+            if (pokemon) {
+              cumple = achievement.validatePokemon(pokemon);
+            }
+          }
+          break;
 
-      if (criteria.generation && details.pokemonGeneration) {
-        if (criteria.generation !== details.pokemonGeneration) {
-          cumple = false;
-        }
-      }
+        case 'add_favorite':
+          // No requiere validación adicional
+          break;
 
-      if (criteria.typeValue && details.pokemonType) {
-        if (criteria.typeValue !== details.pokemonType) {
-          cumple = false;
-        }
-      }
+        case 'favorite_gym_leader':
+          if (details.pokemonId) {
+            const pokemon = await Pokemon.findById(details.pokemonId);
+            if (pokemon) {
+              cumple = achievement.validatePokemon(pokemon);
+            }
+          }
+          break;
 
-      if (achievement.details && achievement.details.pokemonName && details.pokemonName) {
-        if (achievement.details.pokemonName !== details.pokemonName) {
-          cumple = false;
-        }
+        case 'favorite_legendary':
+          cumple = details.isLegendary === true;
+          break;
+
+        case 'check_stat':
+          if (criteria.stat && details.statType) {
+            cumple = criteria.stat === details.statType;
+          }
+          break;
+
+        case 'use_filter':
+          // No requiere validación adicional
+          break;
+
+        case 'profile_complete':
+          // No requiere validación adicional
+          break;
       }
 
       if (cumple) {
@@ -70,11 +157,12 @@ const updateAchievementProgress = async (userId, actionType, details = {}) => {
 
         if (newProgress >= (criteria.requiredCount || 1)) {
           await user.completeAchievement(achievement._id);
+          console.log(`[Achievement Progress] Logro completado: ${achievement.name}`);
         }
       }
     }
   } catch (error) {
-    console.error('Error updating achievement progress:', error);
+    console.error('[Achievement Progress] Error:', error);
     throw error;
   }
 };
@@ -96,21 +184,11 @@ const handleAchievementEvent = async (req, res, next) => {
 
 // Middleware para visitar Pokémon
 const trackPokemonVisit = async (req, res, next) => {
-  if (!req.user?.id) {
-    console.log('trackPokemonVisit: No hay usuario autenticado');
-    return next();
-  }
-
+  if (!req.user?.id) return next();
   try {
     const pokemonId = req.params.id;
-    console.log(`trackPokemonVisit: Procesando visita de Pokémon ${pokemonId} por usuario ${req.user.id}`);
-    
     const pokemon = await Pokemon.findById(pokemonId);
-    if (!pokemon) {
-      console.log(`trackPokemonVisit: Pokémon ${pokemonId} no encontrado`);
-      return next();
-    }
-
+    if (!pokemon) return next();
     const details = {
       pokemonId: pokemon._id.toString(),
       pokemonName: pokemon.name,
@@ -120,35 +198,24 @@ const trackPokemonVisit = async (req, res, next) => {
       isBaby: pokemon.isBaby || false,
       canBreed: pokemon.canBreed || false,
       evolvesWithStone: pokemon.evolvesWithStone || false,
-      isSupport: pokemon.isSupport || false
+      isSupport: pokemon.isSupport || false,
+      isGymLeader: pokemon.isGymLeader || false,
+      hasMultipleEvolutions: pokemon.hasMultipleEvolutions || false
     };
-
-    console.log(`trackPokemonVisit: Actualizando progreso para usuario ${req.user.id} con detalles:`, details);
-    await updateAchievementProgress(req.user.id, 'read_description', details);
-    console.log('trackPokemonVisit: Progreso actualizado exitosamente');
+    await processAchievement(req.user.id, 'read_description', details);
   } catch (error) {
-    console.error('Error en trackPokemonVisit:', error);
+    console.error('[Achievement Progress] Error en trackPokemonVisit:', error);
   }
   next();
 };
 
 // Middleware para agregar a favoritos
 const trackFavoriteAdd = async (req, res, next) => {
-  if (!req.user?.id) {
-    console.log('trackFavoriteAdd: No hay usuario autenticado');
-    return next();
-  }
-
+  if (!req.user?.id) return next();
   try {
     const pokemonId = req.body.pokemonId || req.params.id;
-    console.log(`trackFavoriteAdd: Procesando favorito de Pokémon ${pokemonId} por usuario ${req.user.id}`);
-    
     const pokemon = await Pokemon.findById(pokemonId);
-    if (!pokemon) {
-      console.log(`trackFavoriteAdd: Pokémon ${pokemonId} no encontrado`);
-      return next();
-    }
-
+    if (!pokemon) return next();
     const details = {
       pokemonId: pokemon._id.toString(),
       pokemonName: pokemon.name,
@@ -156,14 +223,13 @@ const trackFavoriteAdd = async (req, res, next) => {
       pokemonGeneration: Math.ceil(pokemon.number / 151),
       isLegendary: pokemon.isLegendary || false,
       isBaby: pokemon.isBaby || false,
-      isSupport: pokemon.isSupport || false
+      isSupport: pokemon.isSupport || false,
+      isGymLeader: pokemon.isGymLeader || false,
+      hasMultipleEvolutions: pokemon.hasMultipleEvolutions || false
     };
-
-    console.log(`trackFavoriteAdd: Actualizando progreso para usuario ${req.user.id} con detalles:`, details);
-    await updateAchievementProgress(req.user.id, 'add_favorite', details);
-    console.log('trackFavoriteAdd: Progreso actualizado exitosamente');
+    await processAchievement(req.user.id, 'add_favorite', details);
   } catch (error) {
-    console.error('Error en trackFavoriteAdd:', error);
+    console.error('[Achievement Progress] Error en trackFavoriteAdd:', error);
   }
   next();
 };
@@ -171,5 +237,6 @@ const trackFavoriteAdd = async (req, res, next) => {
 module.exports = {
   updateAchievementProgress,
   handleAchievementEvent,
-  trackPokemonVisit
+  trackPokemonVisit,
+  trackFavoriteAdd
 }; 

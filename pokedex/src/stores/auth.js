@@ -86,7 +86,7 @@ export const useAuthStore = defineStore('auth', {
         if (!error.response) {
           this.errorUsers = 'No se pudo conectar con el servidor. Intenta más tarde.';
         } else {
-          this.errorUsers = 'Error al obtener usuarios.';
+        this.errorUsers = 'Error al obtener usuarios.';
         }
         console.error('Error fetching users:', error);
         throw error;
