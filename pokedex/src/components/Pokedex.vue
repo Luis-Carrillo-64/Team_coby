@@ -3,15 +3,60 @@
     <!-- Game Boy Screen Effect -->
     <div class="absolute inset-0 bg-[#8bac0f] dark:bg-[#306230] opacity-20 pointer-events-none"></div>
 
-    <!-- Indicadores de Carga y Error -->
-    <div v-if="pokemonStore.loading" class="text-center text-gray-500 dark:text-gray-400 font-pixel text-xl">Cargando Pokémon...</div>
-    <div v-else-if="pokemonStore.error" class="text-center text-red-500 dark:text-red-400 font-pixel text-xl">Error al cargar Pokémon: {{ pokemonStore.error }}</div>
-    <div v-else-if="paginatedPokemonList.length === 0" class="text-center text-gray-600 dark:text-gray-300 font-pixel text-xl">No se encontraron Pokémon.</div>
+    <!-- Tabs para ver todos o solo favoritos -->
+    <div class="flex justify-center mt-6 mb-2 gap-4">
+      <button
+        @click="activeTab = 'all'"
+        :class="activeTab === 'all' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
+        class="px-6 py-2 rounded-lg font-bold shadow border border-pokemon-red dark:border-pokemon-blue transition-colors"
+      >
+        Todos
+      </button>
+      <button
+        v-if="auth.isAuthenticated"
+        @click="activeTab = 'favorites'"
+        :class="activeTab === 'favorites' ? 'bg-pokemon-red text-white dark:bg-pokemon-blue dark:text-white' : 'bg-white dark:bg-[#223c2a] text-pokemon-red dark:text-pokemon-blue'"
+        class="px-6 py-2 rounded-lg font-bold shadow border border-pokemon-red dark:border-pokemon-blue transition-colors"
+      >
+        Mis Favoritos
+      </button>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="flex justify-center mt-6 px-4">
+      <div class="relative w-full max-w-xl">
+        <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+        <div class="relative flex gap-2">
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="handleSearch"
+            placeholder="Buscar Pokémon..."
+            class="w-full py-3 pl-5 pr-12 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f] font-pixel text-sm placeholder-[#0f380f] dark:placeholder-[#9bbc0f] placeholder-opacity-50"
+          />
+          <button
+            @click="showFilters = true"
+            class="relative group"
+          >
+            <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
+            <div class="relative px-4 py-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] bg-[#8bac0f] dark:bg-[#306230]">
+              <Icon icon="mdi:filter-variant" class="w-6 h-6 text-[#0f380f] dark:text-[#9bbc0f]" />
+            </div>
+          </button>
+          <div v-if="loading" class="absolute right-3 top-1/2 -translate-y-1/2">
+            <svg class="animate-spin h-5 w-5 text-[#0f380f] dark:text-[#9bbc0f]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Grid de Pokémon -->
-    <div v-else class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-2 sm:p-4 md:p-8 transition-all duration-300">
+    <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-2 sm:p-4 md:p-8 transition-all duration-300">
       <div
-        v-for="pokemon in paginatedPokemonList"
+        v-for="pokemon in filteredPokemonList"
         :key="pokemon._id"
         class="relative group"
       >
@@ -63,12 +108,12 @@
       </div>
     </div>
 
-    <!-- Paginación Mejorada (Solo en pestaña Todos) -->
-    <div v-if="uiStore.activeTab === 'all'" class="flex justify-center pb-8">
+    <!-- Paginación Mejorada -->
+    <div class="flex justify-center pb-8">
       <nav class="relative z-0 inline-flex gap-2">
         <!-- Ir a la primera página -->
         <button
-          :disabled="uiStore.currentPage === 1"
+          :disabled="currentPage === 1"
           @click="changePage(1)"
           class="relative group"
         >
@@ -79,8 +124,8 @@
         </button>
         <!-- Página anterior -->
         <button
-          :disabled="uiStore.currentPage === 1"
-          @click="changePage(uiStore.currentPage - 1)"
+          :disabled="currentPage === 1"
+          @click="changePage(currentPage - 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
@@ -99,19 +144,19 @@
             <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
             <div
               class="relative px-4 py-2 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]"
-              :class="uiStore.currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
+              :class="currentPage === page ? 'bg-[#0f380f] dark:bg-[#9bbc0f]' : 'bg-[#8bac0f] dark:bg-[#306230]'"
             >
               <span
                 class="font-pixel text-sm"
-                :class="uiStore.currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
+                :class="currentPage === page ? 'text-[#8bac0f] dark:text-[#306230]' : 'text-[#0f380f] dark:text-[#9bbc0f]'"
               >{{ page }}</span>
             </div>
           </button>
         </template>
         <!-- Página siguiente -->
         <button
-          :disabled="uiStore.currentPage === totalPagesComputed"
-          @click="changePage(uiStore.currentPage + 1)"
+          :disabled="currentPage === totalPages"
+          @click="changePage(currentPage + 1)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
@@ -121,8 +166,8 @@
         </button>
         <!-- Ir a la última página -->
         <button
-          :disabled="uiStore.currentPage === totalPagesComputed"
-          @click="changePage(totalPagesComputed)"
+          :disabled="currentPage === totalPages"
+          @click="changePage(totalPages)"
           class="relative group"
         >
           <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
@@ -137,11 +182,11 @@
     <Transition name="modal">
       <div v-if="selectedPokemon" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
         <!-- Fondo difuminado y clickeable para cerrar -->
-        <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="closeDetailsModal()"></div>
+        <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="selectedPokemon = null"></div>
         <!-- Modal principal -->
         <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
           <!-- Botón de cerrar -->
-          <button @click="closeDetailsModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
+          <button @click="selectedPokemon = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
             <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
           </button>
 
@@ -203,18 +248,17 @@
 
               <div class="mb-2">
                 <span class="font-bold">Movimientos:</span>
-                <template v-if="pokeApiData && pokeApiData.moves && pokeApiData.moves.length <= 5">
+                <template v-if="pokeApiData.moves.length <= 5">
                   <span v-for="m in pokeApiData.moves" :key="m.move.name" class="inline-block mx-1 px-2 py-1 rounded bg-[#bada55] dark:bg-[#183c1a] text-[#0f380f] dark:text-[#9bbc0f]">{{ m.move.name }}</span>
                 </template>
-                <template v-else-if="pokeApiData && pokeApiData.moves && pokeApiData.moves.length > 5">
-                  <span v-for="m in (showAllMoves ? pokeApiData.moves : pokeApiData.moves.slice(0, 5))" :key="'modal-' + m.move.name" class="inline-block mx-1 px-2 py-1 rounded bg-[#bada55] dark:bg-[#183c1a] text-[#0f380f] dark:text-[#9bbc0f]">{{ m.move.name }}</span>
+                <template v-else>
+                  <span v-for="m in (showAllMoves ? pokeApiData.moves : pokeApiData.moves.slice(0, 5))" :key="m.move.name" class="inline-block mx-1 px-2 py-1 rounded bg-[#bada55] dark:bg-[#183c1a] text-[#0f380f] dark:text-[#9bbc0f]">{{ m.move.name }}</span>
                   <button v-if="!showAllMoves" @click="showAllMoves = true" class="ml-2 px-3 py-1 rounded-full bg-[#9bbc0f] dark:bg-[#bada55] text-[#0f380f] dark:text-[#183c1a] font-bold shadow hover:scale-105 transition-transform">Ver todos</button>
                   <div v-if="showAllMoves" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                     <span v-for="m in pokeApiData.moves" :key="'all-' + m.move.name" class="block px-2 py-1 rounded bg-[#bada55] dark:bg-[#183c1a] text-[#0f380f] dark:text-[#9bbc0f] text-center">{{ m.move.name }}</span>
                   </div>
                   <button v-if="showAllMoves" @click="showAllMoves = false" class="mt-2 px-3 py-1 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] text-white dark:text-[#183c1a] font-bold shadow hover:scale-105 transition-transform">Mostrar menos</button>
                 </template>
-                 <span v-else>No se encontraron movimientos.</span>
               </div>
             </div>
           </div>
@@ -252,10 +296,10 @@
 
     <!-- Modal de Filtros -->
     <Transition name="modal">
-      <div v-if="uiStore.showFilters" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
-        <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="uiStore.toggleFilters()"></div>
+      <div v-if="showFilters" class="fixed inset-0 z-50 flex items-center justify-center px-2 sm:px-8">
+        <div class="absolute inset-0 bg-[#0f380f]/80 dark:bg-[#9bbc0f]/80 backdrop-blur-sm transition-all duration-300" @click="showFilters = false"></div>
         <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border-4 border-[#bada55] dark:border-[#183c1a] bg-gradient-to-br from-[#f8ffe5] via-[#eaf5c3] to-[#bada55] dark:from-[#183c1a] dark:via-[#223c2a] dark:to-[#306230] p-2 sm:p-8 animate-slide-in-up transition-all duration-300">
-          <button @click="uiStore.toggleFilters()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
+          <button @click="showFilters = false" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#e53935] dark:bg-[#9bbc0f] flex items-center justify-center border-4 border-white dark:border-[#183c1a] shadow-lg hover:scale-110 transition-transform z-10">
             <span class="text-white dark:text-[#183c1a] text-2xl font-bold">×</span>
           </button>
 
@@ -268,8 +312,8 @@
               <button
                 v-for="letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')"
                 :key="letter"
-                @click="uiStore.setFilterLetter(letter === uiStore.selectedLetter ? null : letter)"
-                :class="uiStore.selectedLetter === letter ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] text-[#0f380f] dark:bg-[#306230] dark:text-[#9bbc0f]'"
+                @click="selectedLetter = selectedLetter === letter ? null : letter"
+                :class="selectedLetter === letter ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]'"
                 class="w-10 h-10 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] font-pixel hover:scale-110 transition-transform"
               >
                 {{ letter }}
@@ -289,13 +333,13 @@
               >
                 <input
                   type="checkbox"
-                  v-model="uiStore.selectedTypes"
+                  v-model="selectedTypes"
                   :value="type"
                   class="sr-only"
                 />
                 <span class="font-pixel">{{ type }}</span>
                 <div
-                  v-if="uiStore.selectedTypes.includes(type)"
+                  v-if="selectedTypes.includes(type)"
                   class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center"
                 >
                   <Icon icon="mdi:check" class="w-3 h-3 text-[#0f380f]" />
@@ -311,8 +355,8 @@
               <button
                 v-for="gen in generations"
                 :key="gen.name"
-                @click="uiStore.setFilterGeneration(gen.name === uiStore.selectedGeneration ? null : gen.name)"
-                :class="uiStore.selectedGeneration === gen.name ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] text-[#0f380f] dark:bg-[#306230] dark:text-[#9bbc0f]'"
+                @click="selectedGeneration = selectedGeneration === gen.name ? null : gen.name"
+                :class="selectedGeneration === gen.name ? 'bg-[#0f380f] dark:bg-[#9bbc0f] text-[#8bac0f] dark:text-[#306230]' : 'bg-[#8bac0f] dark:bg-[#306230] text-[#0f380f] dark:text-[#9bbc0f]'"
                 class="p-3 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f] font-pixel hover:scale-105 transition-transform"
               >
                 {{ gen.name }}
@@ -329,7 +373,7 @@
                 <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
                 <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
                   <select
-                    v-model="uiStore.selectedStat"
+                    v-model="selectedStat"
                     class="w-full bg-transparent text-[#0f380f] dark:text-[#9bbc0f] font-pixel border-2 border-[#0f380f] dark:border-[#9bbc0f] rounded-lg p-2"
                   >
                     <option value="">Seleccionar estadística</option>
@@ -346,7 +390,7 @@
                 <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
                 <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
                   <select
-                    v-model="uiStore.statOperator"
+                    v-model="statOperator"
                     class="w-full bg-transparent text-[#0f380f] dark:text-[#9bbc0f] font-pixel border-2 border-[#0f380f] dark:border-[#9bbc0f] rounded-lg p-2"
                   >
                     <option value=">">Mayor que</option>
@@ -360,7 +404,7 @@
                 <div class="relative bg-[#8bac0f] dark:bg-[#306230] p-4 rounded-lg border-2 border-[#0f380f] dark:border-[#9bbc0f]">
                   <input
                     type="number"
-                    v-model="uiStore.statValue"
+                    v-model="statValue"
                     min="0"
                     max="255"
                     placeholder="Valor de la estadística"
@@ -374,7 +418,7 @@
           <!-- Botones de Acción -->
           <div class="flex justify-end gap-4">
             <button
-              @click="uiStore.clearFilters()"
+              @click="clearFilters"
               class="relative group"
             >
               <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
@@ -383,7 +427,7 @@
               </div>
             </button>
             <button
-              @click="applyFilters()"
+              @click="applyFilters"
               class="relative group"
             >
               <div class="absolute -inset-1 bg-[#0f380f] dark:bg-[#9bbc0f] rounded-lg blur-sm opacity-75"></div>
@@ -399,282 +443,421 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useUiStore } from '@/stores/ui';
-import { usePokemonStore } from '@/stores/pokemon';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useAuthStore } from '../stores/auth';
+import { usePokemonStore } from '../stores/pokemon';
+import { useDebounceFn } from '@vueuse/core';
 import { Icon } from '@iconify/vue';
-import { getTypeColor } from '@/utils/pokemonUtils';
-import axios from 'axios';
 
 const auth = useAuthStore();
-const uiStore = useUiStore();
-const pokemonStore = usePokemonStore();
+const pokemon = usePokemonStore();
 
+const searchQuery = ref('');
 const selectedPokemon = ref(null);
 const pokeApiData = ref(null);
 const evolutionChain = ref([]);
-const loadingFavoritos = ref(false);
+const showCreateModal = ref(false);
+const currentPage = ref(1);
+const itemsPerPage = 12;
 const showAllMoves = ref(false);
+const activeTab = ref('all');
+const showFilters = ref(false);
+const selectedLetter = ref(null);
+const selectedTypes = ref([]);
+const selectedGeneration = ref(null);
+const selectedStat = ref('');
+const statOperator = ref('>');
+const statValue = ref('');
 
-const generations = ref([
-  { name: 'Generación 1', range: '1-151' },
-  { name: 'Generación 2', range: '152-251' },
-  { name: 'Generación 3', range: '252-386' },
-  { name: 'Generación 4', range: '387-493' },
-  { name: 'Generación 5', range: '494-649' },
-  { name: 'Generación 6', range: '650-721' },
-  { name: 'Generación 7', range: '722-809' }
-]);
+const isAdmin = computed(() => auth.user?.role === 'admin');
+const pokemonList = computed(() => pokemon.pokemon);
+const loading = computed(() => pokemon.loading);
+const totalPages = computed(() => pokemon.pagination.totalPages);
 
-const typeColors = {
-  normal: { bg: '#A8A77A', border: '#8A8A59', text: '#FFFFFF' },
-  fire: { bg: '#EE8160', border: '#CD5E44', text: '#FFFFFF' },
-  water: { bg: '#6390F0', border: '#4569C0', text: '#FFFFFF' },
-  electric: { bg: '#F7D02C', border: '#DBB50A', text: '#212121' },
-  grass: { bg: '#7AC74C', border: '#5C9C36', text: '#FFFFFF' },
-  ice: { bg: '#96D9D6', border: '#7EC3BE', text: '#212121' },
-  fighting: { bg: '#C22E28', border: '#9C2321', text: '#FFFFFF' },
-  poison: { bg: '#A33EA1', border: '#833380', text: '#FFFFFF' },
-  ground: { bg: '#E2BF65', border: '#C5A54F', text: '#212121' },
-  flying: { bg: '#A98FF3', border: '#8D76C3', text: '#212121' },
-  psychic: { bg: '#F95587', border: '#D6416D', text: '#FFFFFF' },
-  bug: { bg: '#A6B91A', border: '#8B9A14', text: '#FFFFFF' },
-  rock: { bg: '#B6A136', border: '#9C8D2F', text: '#FFFFFF' },
-  ghost: { bg: '#735797', border: '#5B4A77', text: '#FFFFFF' },
-  dragon: { bg: '#6F35FC', border: '#571EBC', text: '#FFFFFF' },
-  dark: { bg: '#705746', border: '#5A4539', text: '#FFFFFF' },
-  steel: { bg: '#B7B7CE', border: '#9A9AB7', text: '#212121' },
-  fairy: { bg: '#D685AD', border: '#B86C90', text: '#212121' }
-};
-
-onMounted(() => {
-  if (auth.isAuthenticated) {
-    auth.getFavorites().catch(err => console.error('Error fetching favorites on mount:', err));
-  }
-
-  // Cargar todos los Pokémon al montar el componente para tener la lista completa para evoluciones y favoritos
-  pokemonStore.fetchAllPokemon().catch(err => console.error('Error fetching all pokemon on mount:', err));
-
-  // Cargar la primera página de Pokémon con filtros iniciales
-  pokemonStore.fetchPokemon(1, 12, uiStore.currentFilters).catch(err => console.error('Error fetching pokemon on mount:', err));
+const newPokemon = ref({
+  name: '',
+  number: '',
+  types: '',
+  description: '',
+  height: '',
+  weight: '',
+  image: ''
 });
 
-const paginatedPokemonList = computed(() => {
-  if (uiStore.activeTab === 'favorites') {
-    return pokemonStore.allPokemon.filter(p => auth.favorites.includes(p.name));
-  } else {
-    return pokemonStore.pokemon;
-  }
-});
+// FAVORITOS
+const favoritos = ref([]);
+const loadingFavoritos = ref(false);
 
-const totalPagesComputed = computed(() => {
-  if (uiStore.activeTab === 'favorites') {
-    return 1; 
-  } else {
-    return pokemonStore.pagination.totalPages;
-  }
-});
-
-const paginationRange = computed(() => {
-  if (uiStore.activeTab !== 'all') return [];
-
-  const total = totalPagesComputed.value;
-  const current = uiStore.currentPage;
-  const delta = 2;
-  const range = [];
-  let l = 1;
-  let r = total;
-  let breakPoint = 0;
-
-  for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
-      if (breakPoint + 1 < i) {
-        range.push('...');
-      }
-      range.push(i);
-      breakPoint = i;
-    }
-  }
-  return range;
-});
-
-const changePage = (page) => {
-  if (uiStore.activeTab !== 'all') return;
-
-  uiStore.setCurrentPage(page);
-  pokemonStore.fetchPokemon(page, 12, uiStore.currentFilters);
-};
-
-const viewDetails = async (pokemon) => {
-  try {
-    // 1. Llama a tu backend para disparar el tracking de logros
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/pokemon/${pokemon._id}`,
-      {
-        headers: { Authorization: `Bearer ${auth.token}` }
-      }
-    );
-    // 2. Usa la respuesta del backend como fuente principal de datos
-    selectedPokemon.value = response.data;
-
-    // 3. (Opcional) Llama a la PokeAPI externa si quieres datos extra
-    pokeApiData.value = null;
-    evolutionChain.value = [];
-    try {
-      const pokeApiResponse = await axios.get(`https://pokeapi.co/api/v2/pokemon/${selectedPokemon.value.number}`, {
-        withCredentials: false
-      });
-      pokeApiData.value = pokeApiResponse.data;
-      // ... resto de tu lógica para la PokeAPI ...
-      if (!pokeApiData.value.moves) {
-        pokeApiData.value.moves = [];
-      }
-      const speciesUrl = pokeApiData.value.species.url;
-      const speciesResponse = await axios.get(speciesUrl, { withCredentials: false });
-      const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
-      const evolutionChainResponse = await axios.get(evolutionChainUrl, { withCredentials: false });
-      let currentEvo = evolutionChainResponse.data.chain;
-      const evoArray = [];
-      async function processEvolutionChain(evolution) {
-        if (!evolution) return;
-        const evoSpeciesName = evolution.species.name;
-        const pokeData = pokemonStore.allPokemon.find(p => p.name.toLowerCase() === evoSpeciesName.toLowerCase());
-        let spriteUrl = pokeData ? pokeData.image : null;
-        if (pokeData && pokeData.number) {
-          try {
-            const evoPokeApiResponse = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokeData.number}`, { withCredentials: false });
-            if (evoPokeApiResponse.data.sprites?.versions['generation-v']['black-white'].animated?.front_default) {
-              spriteUrl = evoPokeApiResponse.data.sprites.versions['generation-v']['black-white'].animated.front_default;
-            } else if (evoPokeApiResponse.data.sprites?.front_default) {
-              spriteUrl = evoPokeApiResponse.data.sprites.front_default;
-            } else if (evoPokeApiResponse.data.sprites?.other?.dream_world?.front_default) {
-              spriteUrl = evoPokeApiResponse.data.sprites.other.dream_world.front_default;
-            } else if (evoPokeApiResponse.data.sprites?.versions['generation-i']['pixel-pokemon']?.front_default) {
-              spriteUrl = evoPokeApiResponse.data.sprites.versions['generation-i']['pixel-pokemon'].front_default;
-            }
-          } catch (apiError) {
-            // Fallback to default spriteUrl
-          }
-        }
-        evoArray.push({
-          name: evoSpeciesName,
-          sprite: spriteUrl
-        });
-        if (evolution.evolves_to && evolution.evolves_to.length > 0) {
-          await Promise.all(evolution.evolves_to.map(evo => processEvolutionChain(evo)));
-        }
-      }
-      await processEvolutionChain(currentEvo);
-      evolutionChain.value = evoArray;
-    } catch (err) {
-      console.error('Error fetching PokeAPI data:', err);
-      pokeApiData.value = null;
-      evolutionChain.value = [];
-    }
-    showAllMoves.value = false;
-  } catch (error) {
-    console.error('Error cargando detalle de Pokémon desde backend:', error);
-  }
-};
-
-const closeDetailsModal = () => {
-  selectedPokemon.value = null;
-  pokeApiData.value = null;
-  evolutionChain.value = [];
-  showAllMoves.value = false;
-};
-
-const isFavorite = computed(() => (pokemonName) => {
-  return auth.favorites?.includes(pokemonName) || false;
-});
+const isFavorite = (pokemonName) => favoritos.value.includes(pokemonName);
 
 const toggleFavorite = async (pokemonName) => {
-  if (!auth.isAuthenticated) return; 
-
+  if (!auth.isAuthenticated) return;
   loadingFavoritos.value = true;
   try {
-    if (isFavorite.value(pokemonName)) {
+    if (isFavorite(pokemonName)) {
       await auth.removeFavorite(pokemonName);
     } else {
       await auth.addFavorite(pokemonName);
     }
-  } catch (err) {
-    console.error('Error toggling favorite:', err);
-  } finally {
-    loadingFavoritos.value = false;
+    favoritos.value = await auth.getFavorites();
+    if (activeTab.value === 'favorites') {
+      await pokemon.fetchAllPokemon();
+    }
+  } catch (e) {}
+  loadingFavoritos.value = false;
+};
+
+// Colores por tipo de Pokémon
+const typeColors = {
+  Grass: { bg: '#78C850', border: '#4E8234', text: '#1B2E13' },
+  Poison: { bg: '#A040A0', border: '#682A68', text: '#fff' },
+  Fire: { bg: '#F08030', border: '#9C531F', text: '#fff' },
+  Water: { bg: '#6890F0', border: '#445E9C', text: '#fff' },
+  Electric: { bg: '#F8D030', border: '#A1871F', text: '#1B1B13' },
+  Bug: { bg: '#A8B820', border: '#6D7815', text: '#1B2E13' },
+  Normal: { bg: '#A8A878', border: '#6D6D4E', text: '#1B1B13' },
+  Flying: { bg: '#A890F0', border: '#6D5E9C', text: '#1B1B13' },
+  Ground: { bg: '#E0C068', border: '#927D44', text: '#1B1B13' },
+  Fairy: { bg: '#EE99AC', border: '#9B6470', text: '#1B1B13' },
+  Fighting: { bg: '#C03028', border: '#7D1F1A', text: '#fff' },
+  Psychic: { bg: '#F85888', border: '#A13959', text: '#fff' },
+  Rock: { bg: '#B8A038', border: '#786824', text: '#1B1B13' },
+  Steel: { bg: '#B8B8D0', border: '#787887', text: '#1B1B13' },
+  Ice: { bg: '#98D8D8', border: '#638D8D', text: '#1B1B13' },
+  Ghost: { bg: '#705898', border: '#493963', text: '#fff' },
+  Dragon: { bg: '#7038F8', border: '#4924A1', text: '#fff' },
+  Dark: { bg: '#705848', border: '#49392F', text: '#fff' },
+};
+
+const getTypeColor = (type) => {
+  return typeColors[type] || { bg: '#A8A878', border: '#6D6D4E', text: '#1B1B13' };
+};
+
+const handleSearch = useDebounceFn(async () => {
+  if (searchQuery.value) {
+    await pokemon.searchPokemon(searchQuery.value);
+  } else {
+    await fetchPokemon();
   }
+}, 300);
+
+const fetchPokemon = async () => {
+  await pokemon.fetchPokemon(currentPage.value, itemsPerPage);
+};
+
+async function fetchPokeApiData(pokemon) {
+  pokeApiData.value = null;
+  try {
+    // Buscar por nombre en minúsculas (la PokeAPI es case sensitive)
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name.toLowerCase()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    pokeApiData.value = data;
+  } catch (e) {
+    pokeApiData.value = null;
+  }
+}
+
+async function fetchEvolutionChain(pokemon) {
+  evolutionChain.value = [];
+  try {
+    // 1. Obtener especie
+    const resSpecies = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.name.toLowerCase()}`);
+    if (!resSpecies.ok) return;
+    const species = await resSpecies.json();
+    // 2. Obtener la cadena de evolución
+    const evoUrl = species.evolution_chain.url;
+    const resEvo = await fetch(evoUrl);
+    if (!resEvo.ok) return;
+    const evoData = await resEvo.json();
+    // 3. Recorrer la cadena
+    let chain = [];
+    let current = evoData.chain;
+    while (current) {
+      chain.push(current.species.name);
+      if (current.evolves_to && current.evolves_to.length > 0) {
+        current = current.evolves_to[0];
+      } else {
+        current = null;
+      }
+    }
+    // 4. Obtener sprites de cada etapa
+    const sprites = await Promise.all(chain.map(async name => {
+      try {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+        if (!res.ok) return { name, sprite: null };
+        const data = await res.json();
+        return { name, sprite: data.sprites.front_default };
+      } catch { return { name, sprite: null }; }
+    }));
+    evolutionChain.value = sprites;
+  } catch (e) {
+    evolutionChain.value = [];
+  }
+}
+
+const viewDetails = async (pokemon) => {
+  selectedPokemon.value = pokemon;
+  await fetchPokeApiData(pokemon);
+  await fetchEvolutionChain(pokemon);
+};
+
+const editPokemon = (pokemon) => {
+  // Implementar lógica de edición
+};
+
+const deletePokemon = async (id) => {
+  if (confirm('¿Estás seguro de que deseas eliminar este Pokémon?')) {
+    await pokemon.deletePokemon(id);
+    await fetchPokemon();
+  }
+};
+
+const handleCreatePokemon = async () => {
+  const pokemonData = {
+    ...newPokemon.value,
+    types: newPokemon.value.types.split(',').map(type => type.trim())
+  };
+  await pokemon.createPokemon(pokemonData);
+  showCreateModal.value = false;
+  await fetchPokemon();
+};
+
+const generations = [
+  { name: 'Generación I (Kanto)', range: '#001 - #151' },
+  { name: 'Generación II (Johto)', range: '#152 - #251' },
+  { name: 'Generación III (Hoenn)', range: '#252 - #386' },
+  { name: 'Generación IV (Sinnoh)', range: '#387 - #493' },
+  { name: 'Generación V (Unova)', range: '#494 - #649' },
+  { name: 'Generación VI (Kalos)', range: '#650 - #721' },
+  { name: 'Generación VII (Alola)', range: '#722 - #809' }
+];
+
+const clearFilters = () => {
+  selectedLetter.value = null;
+  selectedTypes.value = [];
+  selectedGeneration.value = null;
+  selectedStat.value = '';
+  statOperator.value = '>';
+  statValue.value = '';
 };
 
 const applyFilters = () => {
-  if (uiStore.activeTab !== 'all') return;
-
-  // Extraer solo el número de la generación si está seleccionada
-  const generationNumber = uiStore.selectedGeneration ? uiStore.selectedGeneration.split(' ')[1] : null;
-
-  // Actualizar los filtros en el store
-  uiStore.setCurrentPage(1);
-  
-  // Usar los filtros actuales del store
-  pokemonStore.fetchPokemon(1, 12, uiStore.currentFilters);
+  showFilters.value = false;
 };
 
-watch(() => uiStore.activeTab, (newTab) => {
-  if (newTab === 'all') {
-    pokemonStore.fetchPokemon(uiStore.currentPage, 12, uiStore.currentFilters);
-  } else if (newTab === 'favorites') {
-    if (auth.isAuthenticated) {
-      if (!auth.favorites || auth.favorites.length === 0) {
-        auth.getFavorites().catch(err => console.error('Error fetching favorites on tab change:', err));
-      }
-      if (!pokemonStore.allPokemon || pokemonStore.allPokemon.length === 0) {
-         pokemonStore.fetchAllPokemon().catch(err => console.error('Error fetching all pokemon on tab change:', err));
-      }
-      uiStore.setCurrentPage(1);
-    }
+const allPokemonLoaded = ref(false);
+const allPokemonList = ref([]);
+
+const getGenerationNumber = (genString) => {
+  if (!genString) return '';
+  if (genString.includes('I (Kanto)')) return '1';
+  if (genString.includes('II (Johto)')) return '2';
+  if (genString.includes('III (Hoenn)')) return '3';
+  if (genString.includes('IV (Sinnoh)')) return '4';
+  if (genString.includes('V (Unova)')) return '5';
+  if (genString.includes('VI (Kalos)')) return '6';
+  if (genString.includes('VII (Alola)')) return '7';
+  return '';
+};
+
+const filters = computed(() => {
+  const f = {};
+  if (selectedLetter.value) f.letter = selectedLetter.value;
+  if (selectedTypes.value.length > 0) f.types = selectedTypes.value.join(',');
+  if (selectedGeneration.value) f.generation = getGenerationNumber(selectedGeneration.value);
+  if (selectedStat.value && statValue.value) {
+    f.stat = selectedStat.value;
+    f.statOp = statOperator.value;
+    f.statValue = statValue.value;
   }
+  if (searchQuery.value) f.search = searchQuery.value;
+  console.log('Filtros enviados al backend:', f);
+  return f;
 });
 
-watch(() => auth.isAuthenticated, async (isAuthenticated) => {
-  if (isAuthenticated) {
-    try {
-      await auth.getFavorites();
-    } catch (err) {
-      console.error('Error fetching favorites after auth state change:', err);
+const fetchFilteredPokemon = async () => {
+  if (activeTab.value === 'favorites') {
+    if (!allPokemonLoaded.value) {
+      await pokemon.fetchAllPokemon();
+      allPokemonList.value = [...pokemon.pokemon];
+      allPokemonLoaded.value = true;
     }
   } else {
+    await pokemon.fetchPokemon(currentPage.value, itemsPerPage, filters.value);
+  }
+};
+
+const filteredFavorites = computed(() => {
+  let filtered = allPokemonList.value;
+  if (selectedLetter.value) filtered = filtered.filter(p => p.name.startsWith(selectedLetter.value));
+  if (selectedTypes.value.length > 0) filtered = filtered.filter(p => selectedTypes.value.some(type => p.types.includes(type)));
+  if (selectedGeneration.value) {
+    const gens = {
+      '1': [1, 151], '2': [152, 251], '3': [252, 386], '4': [387, 493], '5': [494, 649], '6': [650, 721], '7': [722, 809]
+    };
+    const genNum = getGenerationNumber(selectedGeneration.value);
+    if (gens[genNum]) {
+      filtered = filtered.filter(p => p.number >= gens[genNum][0] && p.number <= gens[genNum][1]);
+    }
+  }
+  if (selectedStat.value && statValue.value) {
+    const value = parseInt(statValue.value);
+    filtered = filtered.filter(p => {
+      if (!p.stats || !p.stats[selectedStat.value]) return false;
+      const statValue_ = p.stats[selectedStat.value];
+      switch (statOperator.value) {
+        case '>': return statValue_ > value;
+        case '<': return statValue_ < value;
+        case '=': return statValue_ === value;
+        default: return true;
+      }
+    });
+  }
+  const favs = favoritos.value.map(f => f.toLowerCase());
+  filtered = filtered.filter(p => favs.includes(p.name.toLowerCase()));
+  return filtered;
+});
+
+const paginatedFavorites = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredFavorites.value.slice(start, end);
+});
+
+const filteredPokemonList = computed(() => {
+  if (activeTab.value === 'favorites') {
+    return paginatedFavorites.value;
+  } else {
+    return pokemonList.value;
   }
 });
 
-const handleSearchInput = (value) => {
-  uiStore.setSearchQuery(value);
+const totalPagesComputed = computed(() => {
+  if (activeTab.value === 'favorites') {
+    return Math.ceil(filteredFavorites.value.length / itemsPerPage) || 1;
+  } else {
+    return totalPages.value;
+  }
+});
+
+const paginationRange = computed(() => {
+  const total = totalPagesComputed.value;
+  const current = currentPage.value;
+  const delta = 2;
+  const range = [];
+  let l = Math.max(2, current - delta);
+  let r = Math.min(total - 1, current + delta);
+  range.push(1);
+  if (l > 2) range.push('...');
+  for (let i = l; i <= r; i++) range.push(i);
+  if (r < total - 1) range.push('...');
+  if (total > 1) range.push(total);
+  return range;
+});
+
+const changePage = async (page) => {
+  currentPage.value = page;
+  if (activeTab.value === 'favorites') {
+    // No recargar del backend
+  } else {
+    await fetchFilteredPokemon();
+  }
 };
 
-watch(() => uiStore.searchQuery, (newQuery) => {
-  // Aplicar filtro de búsqueda automáticamente al cambiar la consulta
-  applyFilters();
+const isAnyFilterActive = computed(() => {
+  return (
+    selectedLetter.value ||
+    selectedTypes.value.length > 0 ||
+    selectedGeneration.value ||
+    (selectedStat.value && statValue.value)
+  );
+});
+
+watch([
+  selectedLetter,
+  selectedTypes,
+  selectedGeneration,
+  selectedStat,
+  statOperator,
+  statValue,
+  searchQuery,
+  activeTab
+], async ([, , , , , , , newTab], [,,,,,, , oldTab]) => {
+  currentPage.value = 1;
+  if (activeTab.value === 'favorites') {
+    if (!auth.isAuthenticated) {
+      favoritos.value = [];
+      return;
+    }
+    if (!allPokemonLoaded.value) {
+      await pokemon.fetchAllPokemon();
+      allPokemonList.value = [...pokemon.pokemon];
+      allPokemonLoaded.value = true;
+    }
+    favoritos.value = await auth.getFavorites();
+  }
+  await fetchFilteredPokemon();
+});
+
+onMounted(async () => {
+  await fetchFilteredPokemon();
+  if (auth.isAuthenticated) {
+    favoritos.value = await auth.getFavorites();
+  } else {
+    favoritos.value = [];
+  }
 });
 </script>
 
-<style scoped>
-.modal-enter-active, .modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-.modal-enter-from, .modal-leave-to {
-  opacity: 0;
-}
-.modal-enter-active .animate-slide-in-up, .modal-leave-active .animate-slide-in-up {
-  transition: all 0.3s ease;
-}
-.modal-enter-from .animate-slide-in-up, .modal-leave-to .animate-slide-in-up {
-  transform: translateY(20px);
-  opacity: 0;
-}
-.animate-bounce-subtle {
-  animation: bounce-subtle 1s infinite alternate ease-in-out;
+<style>
+/* Animaciones */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease-out;
 }
 
-@keyframes bounce-subtle {
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-bounce-subtle {
+  animation: bounceSubtle 2s infinite;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceSubtle {
   0%, 100% {
     transform: translateY(0);
   }
@@ -682,35 +865,4 @@ watch(() => uiStore.searchQuery, (newQuery) => {
     transform: translateY(-5px);
   }
 }
-
-/* Animaciones para los detalles del modal */
-.animate-slide-in-left {
-  animation: slide-in-left 0.5s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.5s ease-out;
-}
-
-@keyframes slide-in-left {
-  0% {
-    transform: translateX(-20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slide-in-right {
-  0% {
-    transform: translateX(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-</style>
+</style> 

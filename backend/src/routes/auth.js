@@ -1,31 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { validateLogin, validateRegister, validateFavorite } = require('../middleware/validator');
-const { protect, restrictTo } = require('../middleware/auth');
+const { authenticateToken, isAdmin } = require('../middleware/auth');
 
 // Rutas públicas
-router.post('/register', validateRegister, authController.register);
-router.post('/login', validateLogin, authController.login);
-router.post('/refresh-token', authController.refreshToken);
-router.post('/logout', authController.logout);
+router.post('/register', authController.register);
+router.post('/login', authController.login);
 
 // Rutas protegidas
-router.use(protect); // Middleware de autenticación para todas las rutas siguientes
+router.get('/verify', authenticateToken, authController.verifyToken);
+router.put('/preferences', authenticateToken, authController.updatePreferences);
+router.get('/users', authenticateToken, isAdmin, authController.getUsers);
+router.get('/favorites', authenticateToken, authController.getFavorites);
+router.post('/favorites/add', authenticateToken, authController.addFavorite);
+router.post('/favorites/remove', authenticateToken, authController.removeFavorite);
 
-router.get('/verify', authController.verifyToken);
-router.put('/preferences', authController.updatePreferences);
-router.get('/favorites', authController.getFavorites);
-router.post('/favorites/add', validateFavorite, authController.addFavorite);
-router.post('/favorites/remove', validateFavorite, authController.removeFavorite);
-router.get('/me/achievements', authController.getMeAchievements);
-
-// Rutas de administrador
-router.use(restrictTo('admin')); // Middleware de restricción para rutas de admin
-
-router.get('/users', authController.getUsers);
-router.post('/users', validateRegister, authController.createUser);
-router.put('/users/:id', authController.updateUser);
-router.delete('/users/:id', authController.deleteUser);
+// Admin: gestión de usuarios
+router.post('/users', authenticateToken, isAdmin, authController.createUser);
+router.put('/users/:id', authenticateToken, isAdmin, authController.updateUser);
+router.delete('/users/:id', authenticateToken, isAdmin, authController.deleteUser);
 
 module.exports = router; 

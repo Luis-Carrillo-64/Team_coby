@@ -1,5 +1,4 @@
 const Pokemon = require('../models/Pokemon');
-const { updateAchievementProgress } = require('./achievementController'); // Importamos la función de logros
 
 // Obtener todos los pokemon (paginado)
 exports.getAllPokemon = async (req, res) => {
@@ -19,9 +18,7 @@ exports.getAllPokemon = async (req, res) => {
     // Filtro por tipos (uno o varios)
     if (req.query.types) {
       const types = Array.isArray(req.query.types) ? req.query.types : req.query.types.split(',');
-      // Crear una expresión regular para cada tipo para búsqueda insensible a mayúsculas/minúsculas
-      const typeRegexes = types.map(type => new RegExp('^' + type + '$', 'i'));
-      andFilters.push({ types: { $elemMatch: { $in: typeRegexes } } });
+      andFilters.push({ types: { $in: types } });
     }
 
     // Filtro por generación (rango de número)
@@ -56,7 +53,7 @@ exports.getAllPokemon = async (req, res) => {
 
     // Filtro por búsqueda de texto (nombre)
     if (req.query.search) {
-      andFilters.push({ name: new RegExp('^' + req.query.search, 'i') });
+      andFilters.push({ name: new RegExp(req.query.search, 'i') });
     }
 
     // Combinar todos los filtros
@@ -81,20 +78,12 @@ exports.getAllPokemon = async (req, res) => {
 };
 
 // Obtener un pokemon por ID
-exports.getPokemonById = async (req, res, next) => {
+exports.getPokemonById = async (req, res) => {
   try {
-    const pokemonId = req.params.id;
-    const userId = req.user?.id;
-
-    // Obtener el Pokémon real de la base de datos
-    const pokemon = await Pokemon.findById(pokemonId);
+    const pokemon = await Pokemon.findById(req.params.id);
     if (!pokemon) {
       return res.status(404).json({ message: 'Pokemon no encontrado' });
     }
-
-    // Log para confirmar llamada
-    console.log(`Usuario ${userId} está viendo la descripción de Pokémon ID ${pokemonId}`);
-
     res.json(pokemon);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener pokemon', error: error.message });
@@ -154,7 +143,7 @@ exports.deletePokemon = async (req, res) => {
 exports.searchPokemon = async (req, res) => {
   try {
     const { query } = req.query;
-    const searchRegex = new RegExp('^' + query, 'i');
+    const searchRegex = new RegExp(query, 'i');
 
     const pokemon = await Pokemon.find({
       $or: [
