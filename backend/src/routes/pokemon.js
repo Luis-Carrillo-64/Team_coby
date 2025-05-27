@@ -1,17 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const pokemonController = require('../controllers/pokemonController');
-const { authenticateToken, isAdmin } = require('../middleware/auth');
+const { getAllPokemon, searchPokemon, getAllPokemonNoPaginate, getPokemonById, createPokemon, updatePokemon, deletePokemon } = require('../controllers/pokemonController');
+const { protect, restrictTo } = require('../middleware/auth');
+const { trackPokemonVisit } = require('../middleware/achievementProgress');
 
 // Rutas públicas
-router.get('/', pokemonController.getAllPokemon);
-router.get('/search', pokemonController.searchPokemon);
-router.get('/all', pokemonController.getAllPokemonNoPaginate);
-router.get('/:id', pokemonController.getPokemonById);
+router.get('/', getAllPokemon);
+router.get('/search', searchPokemon);
+router.get('/all', getAllPokemonNoPaginate);
+
+// Rutas que requieren autenticación para tracking de logros
+router.get('/:id', protect, trackPokemonVisit, getPokemonById);
 
 // Rutas protegidas (solo admin)
-router.post('/', authenticateToken, isAdmin, pokemonController.createPokemon);
-router.put('/:id', authenticateToken, isAdmin, pokemonController.updatePokemon);
-router.delete('/:id', authenticateToken, isAdmin, pokemonController.deletePokemon);
+router.post('/', protect, restrictTo('admin'), createPokemon);
+router.put('/:id', protect, restrictTo('admin'), updatePokemon);
+router.delete('/:id', protect, restrictTo('admin'), deletePokemon);
 
 module.exports = router; 

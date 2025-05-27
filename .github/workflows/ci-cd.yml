@@ -1,0 +1,54 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      NODE_ENV: test
+      PORT: 3000
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm run test
+
+      - name: Install frontend dependencies
+        run: |
+          cd pokedex
+          npm install
+
+      - name: Run frontend tests
+        run: |
+          cd pokedex
+          npm run test
+
+      - name: Build frontend
+        run: |
+          cd pokedex
+          npm run build:prod
+
+      # Aquí puedes agregar pasos de deploy a Azure, Vercel, etc.
+      # Por ejemplo, para Azure Web Apps puedes usar azure/webapps-deploy@v2 

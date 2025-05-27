@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export const usePokemonStore = defineStore('pokemon', {
   state: () => ({
     pokemon: [],
+    allPokemon: [],
     currentPokemon: null,
     loading: false,
     error: null,
@@ -29,7 +30,11 @@ export const usePokemonStore = defineStore('pokemon', {
           total: response.data.total
         };
       } catch (error) {
-        this.error = 'Error al cargar los Pokemon';
+        if (!error.response) {
+          this.error = 'No se pudo conectar con el servidor. Intenta más tarde.';
+        } else {
+          this.error = 'Error al cargar los Pokemon';
+        }
         console.error('Error:', error);
       } finally {
         this.loading = false;
@@ -42,7 +47,13 @@ export const usePokemonStore = defineStore('pokemon', {
         const response = await axios.get(`${API_URL}/api/pokemon/${id}`);
         this.currentPokemon = response.data;
       } catch (error) {
-        this.error = 'Error al cargar el Pokemon';
+        if (error.response?.status === 404) {
+          this.error = 'No se encontró el Pokémon solicitado';
+        } else if (error.response?.status === 401) {
+          this.error = 'Necesitas iniciar sesión para ver este Pokémon';
+        } else {
+          this.error = 'Error al cargar el Pokémon. Por favor, intenta de nuevo más tarde';
+        }
         console.error('Error:', error);
       } finally {
         this.loading = false;
@@ -55,7 +66,11 @@ export const usePokemonStore = defineStore('pokemon', {
         const response = await axios.get(`${API_URL}/api/pokemon/search?query=${query}`);
         this.pokemon = response.data;
       } catch (error) {
-        this.error = 'Error en la búsqueda';
+        if (error.response?.status === 404) {
+          this.error = 'No se encontraron Pokémon que coincidan con tu búsqueda';
+        } else {
+          this.error = 'Error al buscar Pokémon. Por favor, intenta de nuevo';
+        }
         console.error('Error:', error);
       } finally {
         this.loading = false;
@@ -109,7 +124,7 @@ export const usePokemonStore = defineStore('pokemon', {
       this.loading = true;
       try {
         const response = await axios.get(`${API_URL}/api/pokemon/all`);
-        this.pokemon = response.data.pokemon;
+        this.allPokemon = response.data.pokemon;
         // No actualizamos paginación aquí
       } catch (error) {
         this.error = 'Error al cargar todos los Pokemon';
