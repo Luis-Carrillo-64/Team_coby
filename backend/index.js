@@ -15,11 +15,26 @@ app.use(helmetConfig);
 app.use(limiter);
 app.use(requestLogger);
 
-// Middleware básico
+// Configuración CORS para varios orígenes permitidos
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'https://jolly-beach-00c756310.6.azurestaticapps.net'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Permitir solicitudes sin origen (postman, curl, etc)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `El CORS no está permitido para este origen: ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -55,4 +70,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   logger.info(`Servidor corriendo en puerto ${PORT}`);
-}); 
+});
