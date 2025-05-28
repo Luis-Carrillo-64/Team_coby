@@ -6,9 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest",
-    "build:prod": "vite build --mode production",
-    "preview:prod": "vite preview --mode production"
+    "test": "vitest"
   },
   "dependencies": {
     "@vueuse/core": "^10.1.2",

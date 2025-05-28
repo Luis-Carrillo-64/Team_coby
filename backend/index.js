@@ -4,13 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { logger, limiter, requestLogger, helmetConfig } = require('./src/config/security');
-const { errorHandler } = require('./src/middleware/errorHandler');
-const noCache = require('./src/middleware/noCache');
-// const { validateLogin, validateRegister, validateFavorite } = require('./src/middleware/validator'); // No importamos todos los validadores aquí
 
 const authRoutes = require('./src/routes/auth');
 const pokemonRoutes = require('./src/routes/pokemon');
-const achievementRoutes = require('./src/routes/achievementRoutes');
 
 const app = express();
 
@@ -19,20 +15,13 @@ app.use(helmetConfig);
 app.use(limiter);
 app.use(requestLogger);
 
-// CORS para desarrollo: permite peticiones desde el frontend local
-const allowedOrigin = process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:5173';
+// Middleware básico
 app.use(cors({
-  origin: allowedOrigin,
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
-
-// Asegurar que cookie-parser se use antes de las rutas
-app.use(cookieParser());
 app.use(express.json());
-
-// Aplicar noCache a rutas críticas
-app.use('/api/auth', noCache);
-app.use('/api/achievements', noCache);
+app.use(cookieParser());
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/pokedex', {
@@ -45,15 +34,23 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/pokedex',
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/pokemon', pokemonRoutes);
-app.use('/api/achievements', achievementRoutes);
 
-// Middleware para rutas no encontradas (404)
-app.all('*', (req, res, next) => {
-  next(new AppError(`No se puede encontrar ${req.originalUrl} en este servidor!`, 404));
+// Middleware de manejo de errores
+app.use((err, req, res, next) => {
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    ip: req.ip
+  });
+  
+  res.status(err.status || 500).json({
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Algo salió mal!' 
+      : err.message
+  });
 });
-
-// Middleware de manejo de errores global
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
